@@ -1,8 +1,10 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './react/App'
-import ClientSocket from './socket/clientSocket'
+import io from 'socket.io-client'
 
-const socket = new ClientSocket()
+import './styles.sass'
 
-createRoot(document.getElementById('root')).render(<App/>)
+const socket = io("http://localhost:5500")
+
+createRoot(document.getElementById('root')).render(<App socket={socket} />)
