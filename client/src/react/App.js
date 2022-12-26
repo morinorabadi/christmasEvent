@@ -1,9 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import SetUsername from './username/SerUsername'
-import ShowAll from './username/ShowAll';
-import ShowUserName from './username/ShowUserName';
+// username
+import SetUsername from './username/SetUsername'
+import Users from './username/Users';
+import SelfUser from './username/SelfUser';
 
+// connection
+// import SelfVideo from './videoConnection/SelfVideo';
+import ChatBox from './Connection/ChatBox';
+// import VideoContainer from './videoConnection/VideoContainer'
 
 export default function App({socket}) {
   const [selfUsername, setSelfUsername] = useState({isAdmin : false, username : "", id : ""})
@@ -24,7 +29,6 @@ export default function App({socket}) {
         setIsUsernameSet(true)
         setUserName.current.success()
         setSelfUsername(response.information)
-        // createPeerConnection()
       } else {
         setIsUsernameSet(false)
         setUserName.current.error(response.information.error)
@@ -46,10 +50,14 @@ export default function App({socket}) {
   return (
     <div>
       { isUsernameSet ?
-        <>
-          <ShowUserName selfUsername={selfUsername} />
-          <ShowAll users={users} />
-        </>
+        <div className='container' >
+          <canvas id="mainScene" ></canvas>
+          <div className='slider'>
+            <SelfUser selfUsername={selfUsername} />
+            <Users users={users} />
+            <ChatBox />
+          </div>
+        </div>
         :
         <>
           <SetUsername socket={socket} ref={setUserName} />
