@@ -4,6 +4,8 @@
  * 2. server-other-users
  */
 
+const { v4: uuidV4 }=  require('uuid')
+
 const fakeAdmins = [
     { username : "qwer" ,password : "1234" }
 ]
@@ -13,6 +15,7 @@ class SocketManager
         this.io = _io
         this.sockets = new Map()
         this.socketsInEvent = []
+        this.messages = new Map()
     }
 
     SocketConnect(socket){
@@ -120,13 +123,27 @@ class SocketManager
             }
         })
 
-        socket.on("deavtive-media", (type) => {
-            this.socketsInEvent.forEach(socketId => {
-                if ( socket.id !== socketId ){
-                    this.io.to(socketId).emit("deavtive-media",type)
+        /**
+         * chat
+         */
+        socket.on('send-message', message => {
+            //! check for empty message
+            console.log();
+            if ( socket.data.username ) {
+                const id = uuidV4()
+                const messageObject = {
+                    id,
+                    text : message,
+                    date : Date.now(),
+                    owner : socket.data.username.username
                 }
-            })
+                this.messages.set(id, messageObject)
+                this.io.to(this.socketsInEvent).emit("new-message", {status : 200 , information : messageObject})
+            } else {
+                socket.emit('error')
+            }
         })
+
     }
     sendAllUsers(){
         const sockets = []

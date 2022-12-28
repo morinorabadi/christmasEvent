@@ -46,6 +46,9 @@ class ClientSocket
         this.event.addEvent("remove-video-src")
         this.event.addEvent("remove-audio-src")
 
+        // add chat events
+        this.event.addEvent("new-message")
+
         // ! convert this events 
         // game
         this.onStartGame = null
@@ -89,6 +92,11 @@ class ClientSocket
                 }
             })
 
+            socket.on("new-message", response => {
+                if (this.responseCheck(response)){
+                    this.event.callEvent('new-message', response.information)
+                }
+            })
 
         })
     }

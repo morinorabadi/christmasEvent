@@ -1,7 +1,7 @@
 *
     padding: 0
     margin: 0
-    box-sizing: 0
+    box-sizing: border-box
 
 body
     width: 100vw
@@ -18,11 +18,72 @@ body
 // slider 
 .slider
     display: grid
-    grid-template-rows: auto 3fr 4fr
+    grid-template-rows: auto 1fr 300px
     background: red
 
-//slider childeren
+//slider childeren0
 .chat-box
+    border: 4px solid black
+
+    div
+        display: grid
+        grid-template-columns: 75% 20%
+        justify-content: space-between
+        padding: 10px 10px
+        background: #102772
+
+
+        input
+            display: block
+            width: 100%
+            height: 60px
+            font-size: 24px
+            background: #151435
+
+            border: none
+            border-radius: 15px 
+            color: white
+            padding-left: 20px 
+
+        button            
+            display: block
+            background: #177177
+
+            height: 50px
+            margin-top: 5px
+            
+            border: 0
+            outline: none
+            border-radius: 10px
+            font-weight: bold
+            font-size: 18px
+
+            color: white
+
+    ul
+        list-style: none
+        font-size: 24px    
+        overflow-y: scroll
+        height: 220px
+
+
+    li
+        position: relative
+        background: #3651cc
+        margin: 10px 5px
+        height: 60px
+        span 
+            color: red
+            font-size: 16px    
+            position: absolute
+            top: 5px
+            right: 10px
+
+        p
+            color: white
+            font-size: 24px
+            padding: 10px
+
     background: #00f
     
 .self-user
