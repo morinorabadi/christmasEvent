@@ -7,7 +7,8 @@
 const { v4: uuidV4 }=  require('uuid')
 
 const fakeAdmins = [
-    { username : "qwer" ,password : "1234" }
+    { username : "qwer" ,password : "1234" },
+    { username : "asdf" ,password : "1234" }
 ]
 class SocketManager
 {
@@ -34,17 +35,26 @@ class SocketManager
             this.sockets.delete(socket.id)
 
             // clear socket in events if exist and tell to others
-            console.log("check socketsInEvent length");
-            console.log(this.socketsInEvent.length);
             const index = this.socketsInEvent.indexOf(socket.id)
             if (index !== -1){
-                console.log("exist");
                 this.socketsInEvent.splice(index,1)
                 this.io.to(this.socketsInEvent).emit("user-left-event", socket.id)
             }
-            console.log(this.socketsInEvent.length);
         })
         
+        function createDataSocket(isAdmin,username) {
+            socket.data.information = {
+                isAdmin,
+                username : username,
+
+                isMicOn    : false,
+                isMicAllow : true,
+
+                isCamOn    : false,
+                isCamAllow : true,
+            }
+        }
+
         // admin login
         socket.on("login", (userPass) => {
             const response = { status : 200, information : {} }
@@ -52,12 +62,8 @@ class SocketManager
             fakeAdmins.forEach(user => {
                 if ( user.username == userPass.username ){
                     if ( user.password == userPass.password ){
-                        socket.data.username = {
-                            username : userPass.username,
-                            isAdmin : true,
-                            id : socket.id
-                        }
-                        response.information = socket.data.username
+                        createDataSocket(true,userPass.username)
+                        response.information = socket.data.information
                     }
                 }
             })
@@ -71,11 +77,7 @@ class SocketManager
         
         // set nickname 
         socket.on("set-nickname", (nickName) => {
-            socket.data.username = {
-                username : nickName.username,
-                isAdmin : false,
-                id : socket.id
-            }
+            createDataSocket(false,nickName.username)
             const response = { status : 200, information : socket.data.username }
             socket.emit("server-authentication",response)
             this.sendAllUsers()
@@ -87,7 +89,8 @@ class SocketManager
 
         //  after join in event
         socket.on('join-to-event', () =>  {
-            console.log("["+ socket.id + "] join to event ");
+            console.log("["+ socket.id + "] join to event ");0
+
             
             // all others in event
             this.socketsInEvent.forEach(id => {
@@ -100,6 +103,34 @@ class SocketManager
             this.socketsInEvent.push(socket.id)
         });
 
+        // for update media ui
+        socket.on("share-media", (type, isOn) => {
+            if(type == "audio" ){
+                socket.data.information.isMicOn = isOn
+            } else
+            if ( type == "video" ){
+                socket.data.information.isCamOn = isOn
+            }
+            this.sendAllUsers()
+        })
+
+        // { id : user.id, type: "audio", isAllow : !user.isMicAllow }
+        socket.on("admin-users-media", request => {
+            if (socket.data.information){
+                if ( socket.data.information.isAdmin ){
+                    if ( this.sockets.has(request.id) ){
+                        const guestSocket = this.sockets.get(request.id)
+                        if (request.type == "video"){
+                            guestSocket.data.information.isCamAllow = request.isAllow
+                        }else
+                        if ( request.type == "audio" ){
+                            guestSocket.data.information.isMicAllow = request.isAllow
+                        }
+                        this.sendAllUsers()
+                    }
+                }
+            }
+        })
         
         // RTCPeerConnection events
         socket.on('relayICECandidate', (config) => {
@@ -128,14 +159,13 @@ class SocketManager
          */
         socket.on('send-message', message => {
             //! check for empty message
-            console.log();
-            if ( socket.data.username ) {
+            if ( socket.data.information.username ) {
                 const id = uuidV4()
                 const messageObject = {
                     id,
                     text : message,
                     date : Date.now(),
-                    owner : socket.data.username.username
+                    owner : socket.data.information.username
                 }
                 this.messages.set(id, messageObject)
                 this.io.to(this.socketsInEvent).emit("new-message", {status : 200 , information : messageObject})
@@ -149,15 +179,15 @@ class SocketManager
         const sockets = []
         const response = { status : 200 , information : [] }
         this.sockets.forEach((socket, socketId) => {
-            if ( socket.data.username ){
+            if ( socket.data.information ){
                 sockets.push(socketId)
                 response.information.push({
-                    ...socket.data.username,
-                    id : socketId
+                    ...socket.data.information,
+                    id : socketId,
                 })
             }
         })
-        this.io.to(sockets).emit("server-other-users", response)
+        this.io.to(sockets).emit("server-update-users", response)
     }
 }
 
