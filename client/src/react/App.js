@@ -5,12 +5,14 @@ import SetUsername from './username/SetUsername'
 import Users from './username/Users';
 import SelfUser from './username/SelfUser';
 
+
+import { getSocketEvent } from '../connections/ClientSocket'
+
 // connection
 // import SelfVideo from './videoConnection/SelfVideo';
 import ChatBox from './Connection/ChatBox';
-// import VideoContainer from './videoConnection/VideoContainer'
 
-export default function App({socket}) {
+export default function App() {
   const [selfUsername, setSelfUsername] = useState({isAdmin : false, username : "", id : ""})
   const [isUsernameSet, setIsUsernameSet] = useState(false)
   const [users, setUsers] = useState([
@@ -22,9 +24,10 @@ export default function App({socket}) {
   const setUserName = useRef()
 
   useEffect(()=> { 
-    
+    const socketEvent = getSocketEvent()
     // listen on server-authentication event
-    socket.on("server-authentication", (response) => {
+    
+    const idOne = socketEvent.addCallBack("server-authentication",(response) =>{
       if ( response.status == 200 ) {
         setIsUsernameSet(true)
         setUserName.current.success()
@@ -34,16 +37,16 @@ export default function App({socket}) {
         setUserName.current.error(response.information.error)
       }
     })
+
     // listen on server-other-users event
-    socket.on("server-other-users", (response) => {
-      if ( response.status == 200 ) {
-        console.log(response.information)
-        setUsers(response.information)
-      }
+    const idTwo = socketEvent.addCallBack("server-other-users",(information) =>{
+      setUsers(information)
     })
+
     return () => {
-      socket.off("server-authentication")
-      socket.off("server-other-users")
+      console.log("clean up");
+      socketEvent.removeCallBack(idOne)
+      socketEvent.removeCallBack(idTwo)
     }
   },[])
 
@@ -51,7 +54,7 @@ export default function App({socket}) {
     <div>
       { isUsernameSet ?
         <div className='container' >
-          <canvas id="mainScene" ></canvas>
+          <div id="mainScene" ></div>
           <div className='slider'>
             <SelfUser selfUsername={selfUsername} />
             <Users users={users} />
@@ -60,7 +63,7 @@ export default function App({socket}) {
         </div>
         :
         <>
-          <SetUsername socket={socket} ref={setUserName} />
+          <SetUsername ref={setUserName} />
         </>
       }
     </div>

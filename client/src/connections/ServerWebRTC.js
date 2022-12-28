@@ -1,4 +1,4 @@
-export default class WebRTCSocket
+export default class ServerWebRTC
 {
     constructor(){
         let dataChannel = null

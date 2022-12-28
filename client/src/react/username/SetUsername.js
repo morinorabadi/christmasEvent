@@ -1,7 +1,8 @@
 import React, { useState, useRef, forwardRef, useImperativeHandle } from "react";
 
+import { SocketEmit } from '../../connections/ClientSocket'
 
-const SetUsername = forwardRef(({socket}, ref) => {
+const SetUsername = forwardRef(( props , ref) => {
   const [nickname, setNickname] = useState("")
   
   const [username, setUsername] = useState("")
@@ -33,14 +34,14 @@ const SetUsername = forwardRef(({socket}, ref) => {
 
   const onLogin = () => {
     disableButton()
-    socket.emit("login",{
+    SocketEmit("login",{
       username : username,
       password : password
     })
   }
   const onNickname = () => {
     disableButton()
-    socket.emit("set-nickname", { username : nickname })
+    SocketEmit("set-nickname", { username : nickname })
     console.log(nickname)
   }
 

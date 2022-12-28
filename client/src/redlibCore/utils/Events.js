@@ -9,7 +9,7 @@
  export default class Events{
     constructor()
     {
-        this.events = []
+        this.events = {}
         this.callBacks = {}
     }
 
@@ -23,9 +23,9 @@
     // add functions to added events
     addCallBack(eventName,callBack,order = 0)
     {   
-        // generate basic id
         this.events[eventName].callBackId++
         const id = this.events[eventName].callBackId
+        
         const callBackObject = { id : id, callBack : callBack }
         if (order == 3 || order == 2){
             this.callBacks[eventName].splice(this.events[eventName].begin ,0,callBackObject);

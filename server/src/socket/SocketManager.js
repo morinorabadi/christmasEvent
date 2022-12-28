@@ -55,7 +55,6 @@ class SocketManager
                             id : socket.id
                         }
                         response.information = socket.data.username
-                        socket.emit("start-video-call")
                     }
                 }
             })
@@ -76,7 +75,6 @@ class SocketManager
             }
             const response = { status : 200, information : socket.data.username }
             socket.emit("server-authentication",response)
-            socket.emit("start-video-call")
             this.sendAllUsers()
         })
 
@@ -85,38 +83,20 @@ class SocketManager
          */
 
         //  after join in event
-        // ! fix isUserAllow
-        socket.on('join-to-event', (isUserAllow) =>  {
+        socket.on('join-to-event', () =>  {
             console.log("["+ socket.id + "] join to event ");
             
             // all others in event
             this.socketsInEvent.forEach(id => {
                 console.log("send offer to this id:  ", id);
-                this.sockets.get(id).emit("server-create-peer-connection", {'peer_id': socket.id, 'should_create_offer': false})            
+                this.sockets.get(id).emit("server-create-peer-connection", {'peer_id': socket.id, 'should_create_offer': true})            
                 // socket that join right now
-                socket.emit("server-create-peer-connection", {'peer_id': id, 'should_create_offer': true})
+                socket.emit("server-create-peer-connection", {'peer_id': id, 'should_create_offer': false})
             })
             // add this user to sockets In Event 
             this.socketsInEvent.push(socket.id)
         });
-    
-        // function part(channel) {
-        //     console.log("["+ socket.id + "] part ");
-    
-        //     if (!(channel in socket.channels)) {
-        //         console.log("["+ socket.id + "] ERROR: not in ", channel);
-        //         return;
-        //     }
-    
-        //     delete socket.channels[channel];
-        //     delete channels[channel][socket.id];
-    
-        //     for (id in channels[channel]) {
-        //         channels[channel][id].emit('removePeer', {'peer_id': socket.id});
-        //         socket.emit('removePeer', {'peer_id': id});
-        //     }
-        // }
-        // socket.on('part', part);
+
         
         // RTCPeerConnection events
         socket.on('relayICECandidate', (config) => {
@@ -138,6 +118,14 @@ class SocketManager
             if (this.sockets.has(peer_id)) {
                 this.sockets.get(peer_id).emit('sessionDescription', {'peer_id': socket.id, 'session_description': session_description});
             }
+        })
+
+        socket.on("deavtive-media", (type) => {
+            this.socketsInEvent.forEach(socketId => {
+                if ( socket.id !== socketId ){
+                    this.io.to(socketId).emit("deavtive-media",type)
+                }
+            })
         })
     }
     sendAllUsers(){
