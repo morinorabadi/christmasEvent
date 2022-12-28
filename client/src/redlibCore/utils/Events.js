@@ -42,11 +42,7 @@
     }
 
     removeCallBack(eventName,id){
-        console.log("debug log remove this in events class");
-        console.log(this.callBacks[eventName].length);
         this.callBacks[eventName] = this.callBacks[eventName].filter( object => object.id !== id)
-        console.log(this.callBacks[eventName].length);
-        console.log("remove this in events class");
     }
     // call event with name and with or without parameters
     callEvent(eventName,parameters = null)

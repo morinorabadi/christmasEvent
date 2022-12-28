@@ -216,10 +216,17 @@ export default class BrowserWebRTC
     // active mic and cam
     const activeCamOrMic = async (type) => {
         try {
-            const config = {}
-            config[type] = true
 
+            // generate config
+            let config
+            if (type == "video"){ config = { video : {width: 480, height: 480, facingMode: "user"}}} 
+            else { config = { audio : true } }
+            
+            // get media from user
             const stream = await navigator.mediaDevices.getUserMedia(config)
+
+            // tell other user in socket to update ui
+            socket.emit("share-media", type, true)
 
             // save local stream
             localMediaStream.push(stream)
@@ -238,6 +245,7 @@ export default class BrowserWebRTC
 
             return true
         } catch (error) {
+            console.log(error);
             alert(`Access denied for ${type}`)
         }
     }
@@ -259,6 +267,7 @@ export default class BrowserWebRTC
                     dataChanels.forEach((chanel,_) => {
                         chanel.send(JSON.stringify({ text : "close-media", type : type, socketId : socket.id }))
                     })
+                    socket.emit("share-media", type, false)
                     track.stop()
                     removeIndex = index
                 }

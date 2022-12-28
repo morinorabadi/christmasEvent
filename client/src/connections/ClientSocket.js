@@ -14,6 +14,7 @@ class ClientSocket
         const socket = io("http://localhost:5500")
         let peerConnection = null
         let browserWebRTC = null
+        let selfUser = null
 
         //* global functions and variable
         this.event = new Events()
@@ -31,14 +32,30 @@ class ClientSocket
                 
                 case "de-active-cam":
                     browserWebRTC.deActiveCam()
+                    break
                 case "de-active-mic":
-                    browserWebRTC.deActiveMic()    
+                    browserWebRTC.deActiveMic()  
+                    break
+                
+                // get users information
+                case "update-users":
+                    return this.users
+                
+                // get self socket id
+                case "self-user":
+                    if (socket.id){
+                        return selfUser
+                    }
+                    break
             }
         }
 
+        this.users = []
+
         // add this socket events
-        this.event.addEvent("server-other-users")
         this.event.addEvent("server-authentication")
+        this.event.addEvent("update-users")
+        this.event.addEvent("update-self-user")
 
         // add browserWebRTC event
         this.event.addEvent("new-video-src")
@@ -75,9 +92,12 @@ class ClientSocket
 
             
             // user name event
-            socket.on("server-other-users", response => {
+            socket.on("server-update-users", response => {
                 if (this.responseCheck(response)){
-                    this.event.callEvent("server-other-users",response.information)
+                    this.users = response.information
+                    selfUser = this.users.find(user => user.id == socket.id)
+                    this.event.callEvent("update-users",this.users)
+                    this.event.callEvent('update-self-user', selfUser)
                 }
             })
 
@@ -93,6 +113,7 @@ class ClientSocket
             })
 
             socket.on("new-message", response => {
+                console.log("new-message");
                 if (this.responseCheck(response)){
                     this.event.callEvent('new-message', response.information)
                 }

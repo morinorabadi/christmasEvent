@@ -42,7 +42,6 @@ const SetUsername = forwardRef(( props , ref) => {
   const onNickname = () => {
     disableButton()
     SocketEmit("set-nickname", { username : nickname })
-    console.log(nickname)
   }
 
   const disableButton = () => {
@@ -79,7 +78,7 @@ const SetUsername = forwardRef(( props , ref) => {
 
       <p>or login as admin user</p>
       <input value={username} onChange={(e) => { setUsername(e.target.value) }}  type="text"placeholder="username" />
-      <input value={password} onChange={(e) => { setPassword(e.target.value) }}  type="text"placeholder="password" />
+      <input value={password} onChange={(e) => { setPassword(e.target.value) }}  type="password"placeholder="password" />
       <button ref={loginButton} onClick={onLogin} > submit </button>
     </div>
   )
