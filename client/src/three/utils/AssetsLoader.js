@@ -8,7 +8,6 @@
  *     objects : [
  *         {type : "texture", src : "...", loadOver : texture => {} },
  *         {type : "gltf"   , src : "...", loadOver : gltf    => {} }
- *         {type : "audio"  , src : "...", loadOver : audio   => {} }
  *     ]
  * }
  */
@@ -16,7 +15,6 @@
 
 import * as THREE from 'three'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
-import {Howl} from 'howler'
 
 export default class AssetsLoader{
     constructor(){
@@ -47,15 +45,6 @@ export default class AssetsLoader{
                         this.isOver(task)
                     }
                 )
-            } else if (object.type == "audio"){
-                const audio = new  Howl({
-                    src : [object.src],
-                    onload : () => {
-                        object.loadOver(audio)
-                        object.isloaded = true
-                        this.isOver(task)
-                    }
-                })
             }
         });
     }

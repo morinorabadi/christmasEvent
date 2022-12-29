@@ -3,16 +3,16 @@ export default class ServerWebRTC
     constructor(){
         let dataChannel = null
         
-        this.createConnection = async ({ localDescription, chanelLabel, emit, onMessege}) => {
+        this.createConnection = async ({ localDescription, chanelLabel, emit, onMessege: onMessene}) => {
     
             const localPeerConnection = new RTCPeerConnection({});
             
             try {
-            // set server localDescription to coonect tihs clinet peer in room
+            // set server localDescription to connect this client peer in room
             await localPeerConnection.setRemoteDescription(new RTCSessionDescription(localDescription));
                 
 
-            // adding event liseners for data chanel
+            // adding event listeners for data chanel
             function onDataChannel({ channel }) {
                 if (channel.label !== chanelLabel) {
                 return;
@@ -21,11 +21,8 @@ export default class ServerWebRTC
                 dataChannel = channel;
                 dataChannel.onmessage = ({data}) => { 
                     const gameInfo = JSON.parse(data) 
-                    onMessege(gameInfo)
+                    onMessene(gameInfo)
                 }
-                dataChannel.onopen = () => console.log('\n\ndataChannel opened\n\n');
-                dataChannel.onclose = () => console.log('\n\ndataChannel closed\n\n');
-                dataChannel.onerror = (error) => console.error('dataChannel error:', error);
             }
 
             localPeerConnection.addEventListener('datachannel', onDataChannel);

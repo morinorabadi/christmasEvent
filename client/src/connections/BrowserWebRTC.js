@@ -86,9 +86,11 @@ export default class BrowserWebRTC
                 case "close-media":
                     if (data.type == "video"){
                         globalEvent.callEvent("remove-video-src", { socketId : peer_id })
+                        peerMediaSrc[peer_id].audio = null
                     } else 
                     if (data.type == "audio"){
-                        globalEvent.callEvent("remove-video-src", { socketId : peer_id })
+                        globalEvent.callEvent("remove-audio-src", { socketId : peer_id })
+                        peerMediaSrc[peer_id].video = null
                     }
                     break;
             }
@@ -115,16 +117,8 @@ export default class BrowserWebRTC
                 globalEvent.callEvent("new-audio-src", {socketId : peer_id ,src : event.streams[0]})
             } else 
             if (event.track.kind == "video" ){
-                console.log(event.streams[0]);
                 peerMediaSrc[peer_id].video = event.streams[0]
                 globalEvent.callEvent("new-video-src", {socketId : peer_id ,src : event.streams[0]})
-                
-                //! test video call remove this
-                // const video = document.createElement('video')
-                // video.setAttribute('id', socket.id)
-                // video.autoplay = true
-                // video.srcObject = event.streams[0]
-                // document.getElementById('video_call').append(video)
             }
         }
 
@@ -205,7 +199,14 @@ export default class BrowserWebRTC
             const peer = peers.get(socketID)
             peer.close()
             peers.delete(socketID)
-                    // clear media src
+            
+            // clear media src
+            if (peerMediaSrc[socketID].video){
+                globalEvent.callEvent("remove-video-src", { socketId : socketID })
+            }
+            if (peerMediaSrc[socketID].audio){
+                globalEvent.callEvent("remove-audio-src", { socketId : socketID })
+            }
             delete peerMediaSrc[socketID]
             
         } else {

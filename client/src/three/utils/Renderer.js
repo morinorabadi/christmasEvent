@@ -5,18 +5,18 @@ export default class Renderer
     constructor(redlibcore,scene,camera){
         this.isActive = false
         
-        // setup rendere
-        const renderer = new THREE.WebGLRenderer({canvas : document.getElementById('three_scene')})
+        // setup renderer
+        const renderer = new THREE.WebGLRenderer({canvas : document.getElementById('test')})
         renderer.setSize(window.innerWidth,window.innerHeight)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        renderer.setClearColor(new THREE.Color("#111"))
 
-        // if "isactive" rendere scene
+        // if "isActive" render scene
         redlibcore.globalEvent.addCallBack("process", () => {
             if ( this.isActive ){ renderer.render(scene,camera) }
+
         })
 
-        // handele resize event
+        // handel resize event
         redlibcore.globalEvent.addCallBack("resize", (sizes) => {
             renderer.setSize(sizes.x, sizes.y)
         })
@@ -27,8 +27,8 @@ export default class Renderer
         this.isActive = true
     }
 
-    // deactive render
-    deactive(){
+    // deActive render
+    deActive(){
         this.isActive = false
     }
 

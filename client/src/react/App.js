@@ -5,7 +5,8 @@ import SetUsername from './username/SetUsername'
 import Users from './username/Users';
 import SelfUser from './username/SelfUser';
 
-
+// test
+import TestVideoAudio from './Connection/TestVideoAudio';
 import { getSocketEvent } from '../connections/ClientSocket'
 
 // connection
@@ -30,7 +31,7 @@ export default function App() {
         setUserName.current.error(response.information.error)
       }
     })
-
+    new TestVideoAudio()
     return () => {
       console.log("clean up");
       event.removeCallBack("server-authentication",eventId)

@@ -41,8 +41,8 @@ export default class Enemy
 
             // we have 3 state on enemy player game info
             // state : good == ping is less than 100
-            // state : bad  == pnig is less than 500
-            // state : dc   == last gameinfo is more than 500 ms
+            // state : bad  == ping is less than 500
+            // state : dc   == last gameInfo is more than 500 ms
             this.playersObject[id] = {
                 model : newEnemy,
                 gameInfo : { 

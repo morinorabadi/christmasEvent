@@ -2,7 +2,7 @@ export default class Clock
 {
     constructor(redlibcore){
 
-        const clock = Date.now()
+        let clock = Date.now()
 
         redlibcore.globalEvent.addCallBack('process', (delta) => { clock += delta })
 

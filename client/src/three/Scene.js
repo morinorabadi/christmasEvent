@@ -4,58 +4,73 @@ import World from './world/world'
 import Renderer from './utils/Renderer';
 import AssetsLoader from './utils/AssetsLoader'
 import Clock from './utils/Clock';
-import Characters from './character/Characters';
-
+import UserCharacters from './character//User';
+import Robot from './character/Robot'
+import Controller from './utils/Controller'
 
 export default class Scene{
     constructor(redlibcore){
+        let renderer = null
+        let character = null
 
-        // create clock
-        const clock = new Clock(redlibcore)
+        this.active = () => {
+            if ( isLoadOver ) { 
+                renderer.active()
+                character.active()
+            }
+        }
 
-        // creating world
-        const world = new World()
-        
-        // setup renderer
-        const renderer = new Renderer(redlibcore, world.scene, charater.camera)
+        this.deActive = () => {
+            renderer.deActive()
+        }
 
-        const loadedAssetes = {}
-        let charaters = null
+        const loadedAssets = {
+            // just for test
+            character : new THREE.Mesh(
+                new THREE.BoxGeometry(),
+                new THREE.MeshStandardMaterial({color : "red"})
+            )
+        }
+        let isLoadOver = false
         this.load = (onLoadOver) => {
             new AssetsLoader().load({
                 loadOver : () => {
-                    // create charaters class
-                    charaters = new Characters(redlibcore,loadedAssetes)
-                    // world.scene.add(charaters.group)
+                    // creating world
+                    const world = new World(loadedAssets.world)
 
-                    // fix load
+                    // create clock
+                    const clock = new Clock(redlibcore)
+
+                    // create character 
+                    character = new UserCharacters(redlibcore,loadedAssets.character, () => clock.getClock())
+                    world.scene.add(character.group)
+
+                    // create robot test
+                    const robot = new Robot(redlibcore,loadedAssets.robot)
+                    world.scene.add(robot)
+                    // create controller
+                    const controller = new Controller(
+                        redlibcore,
+                        (direction) => { character.setDirection(direction) },
+                        () => { character.setDirectionEnd() },
+                    )
+
+                    // setup renderer
+                    renderer = new Renderer(redlibcore, world.scene,character.camera)
+                    
+                    // emit load over
+                    isLoadOver = true
                     onLoadOver()
                 },
+
                 objects : [
-                    // charater 3m model 
-                    {type : "gltf"   , src : "static/spaseShip.glb", loadOver : gltf    => {
-                        loadedAssetes.charater = gltf.scene
-                        gltf.scene.children.forEach( mesh => {
-    
-                            // adding material to 3d model 
-                            switch (mesh.name) {
-                                case "black":
-                                    mesh.material = new THREE.MeshStandardMaterial({ color : '#222' })
-                                    break;
-    
-                                case "white":
-                                    mesh.material = new THREE.MeshStandardMaterial({ color : '#ccc' })
-                                    break;
-    
-                                case "blue":
-                                    mesh.material = new THREE.MeshStandardMaterial({ color : '#12a4ff' })
-                                    break;
-                            }
-                        });
+                    // room
+                    {type : "gltf"   , src : "static/room.glb", loadOver : gltf    => {
+                        loadedAssets.world = gltf
                     }},
-                    // spaseShip audio
-                    {type : "audio"  , src : "static/audios/spaseShip.mp3", loadOver : audio   => {
-                        loadedAssetes.spaseShipAudio = audio
+                    // room
+                    {type : "gltf"   , src : "static/robot1.glb", loadOver : gltf    => {
+                        loadedAssets.robot = gltf
                     }}
                 ]
             })

@@ -40,6 +40,7 @@ class SocketManager
                 this.socketsInEvent.splice(index,1)
                 this.io.to(this.socketsInEvent).emit("user-left-event", socket.id)
             }
+            this.sendAllUsers()
         })
         
         function createDataSocket(isAdmin,username) {
