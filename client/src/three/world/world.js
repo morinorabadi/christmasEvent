@@ -5,12 +5,20 @@ export default class World
     constructor(world){
         // main scene
         this.scene = new THREE.Scene()
-        world.scene.traverse( child => { if ( child.material ) {
-            if( child.material.map ){
-                child.material.map.flipY = false
+        this.collisionShapes = []
+        world.scene.traverse( child => {
+            
+            if (/c\d/.test(child.name)){
+                this.collisionShapes.push(child)
+                child.visible = false
             }
-            child.material.metalness = 0
-        } } );
+
+            if ( child.material ) {
+                if( child.material.map ){
+                    child.material.map.flipY = false
+                }
+                child.material.metalness = 0
+            }});
 
         this.scene.add(world.scene)
 

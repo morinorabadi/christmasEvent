@@ -3,124 +3,155 @@ import { lerp } from 'three/src/math/MathUtils'
 
 export default class UserCharacter
 {
-    constructor(redlibcore, characterModel, getClock ){
-        this.group = new THREE.Group()
-        //! remove this
-        this.group.position.y = 15
-        this.isActive = false
+  constructor(redlibcore, characterModel,collisionShapes, getClock ){
+    this.group = new THREE.Group()
+    
 
-        // character
-        this.character = characterModel
-        this.group.add(this.character)
-        this.playerGameId = null
+    this.isActive = false
 
-        // setup camera and camera group
-        this.cameraGroup = new THREE.Group()
-        this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 1, 200)
-        this.cameraGroup.add(this.camera)
-        this.group.add(this.cameraGroup)
-        this.camera.position.set(0,2,18)
-        this.camera.lookAt(new THREE.Vector3(0,0,0))
-        
-        // adding process event for update position
-        redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
-        redlibcore.globalEvent.addCallBack('resize', () => { this.resize() })
+    // character
+    const character = characterModel
+    this.group.add(character)
 
-        // clock
-        this.getClock = getClock
-        
-        // store every information about move
-        this.moveInfo = {
-            isActive : false,
-            direction : new THREE.Vector2(),
+    const reaCaster = new THREE.Raycaster()
 
-            forceMove : false,
-            speed : 0,
-            maxSpeed : 0.01,
-
-            CameraRotate : Math.PI / 2,
-        }
-
-    }
-    active(){
-        //! we need to update start position
-        // this.group.position.x = position.px 
-        this.isActive = true
-    }
-    deActive(){
-        this.isActive = false
-        this.playerGameId = null
-    }
-    // handel resize events
-    resize(){
+    // camera
+    const cameraGroup = new THREE.Group()
+    const cameraGroup1 = new THREE.Group()
+    cameraGroup1.position.y = 5
+    this.camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 0.1, 1000 );
+    this.camera.position.set(0,15,10)
+    this.camera.lookAt(new THREE.Vector3(0,5,0))
+    cameraGroup.add(this.camera)
+    cameraGroup1.add(cameraGroup)
+    // adding resize event dor resize camera
+    redlibcore.globalEvent.addCallBack('resize', () => { 
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
+    })
+    this.group.add(cameraGroup1)
+
+    // online
+    this.getClock = getClock
+    this.playerGameId = null
+    //! fix  -- don't needed this right now   
+    // send out user position for other player
+    // if (this.playerGameId){
+    //     socket.volatile.emit("ugi", { 
+    //         px : this.group.position.x,
+    //         pz : this.group.position.z,
+    //         ry : this.character.rotation.y,
+    //         t  : this.getClock() ,
+    //         pi : this.playerGameId
+    //     })
+    // }
+    
+    
+    // direction
+    let getDirection = false
+    let direction = new THREE.Vector2()
+
+    // client end sending input
+    this.getDirection = (_direction) => {
+        getDirection = true
+        direction = _direction.normalize()
     }
 
-    // store inputs from control class
-    setDirection(direction){
-        this.moveInfo.direction = direction
-        this.moveInfo.isActive = true
-        
+    // client end sending input
+    this.end = () => {
+        getDirection = false
     }
 
-    // call this event when input is over
-    setDirectionEnd(){
-        this.moveInfo.isActive = false
+
+    const cameraTopLimit = 0.7
+    const cameraDownLimit = -0.2
+    this.getCameraDirection = (direction) => {
+        cameraGroup1.rotation.y += direction.x
+        cameraGroup.rotation.x += direction.y
+
+        if (cameraGroup.rotation.x > cameraTopLimit ){
+            cameraGroup.rotation.x = cameraTopLimit
+        } else if (cameraGroup.rotation.x < cameraDownLimit ){
+            cameraGroup.rotation.x = cameraDownLimit
+        }
     }
 
-    // handel input events
-    updatePosition(delta){
-        // check if is active
-        if (!this.isActive){ return }
 
-        // handel speed of Character
-        if ( this.moveInfo.isActive ){
-            this.moveInfo.forceMove = true
-            if ( this.moveInfo.speed < this.moveInfo.maxSpeed ) {
-                // increase speed for smooth movement
-                this.moveInfo.speed += delta * 0.00002
-            }
-        } else if (this.moveInfo.forceMove) {
-            if (  this.moveInfo.speed > 0 ) {
-                // decrees speed for smooth movement
-                this.moveInfo.speed -= delta * 0.00001
+    // speed
+    const maxSpeed = 0.4
+    const deltaSpeed = 0.002
+    let currentSpeed = 0
+    let hadSpeed = false
+
+    // add global events
+    redlibcore.globalEvent.addCallBack("process", (delta) => {
+
+        // change current speed base on client input
+        if ( getDirection ){
+            // increase speed
+            if (currentSpeed < maxSpeed){
+                currentSpeed += delta * deltaSpeed
+                character.walk()
             } else {
-                this.moveInfo.forceMove = false
+                currentSpeed = maxSpeed
+            }
+            hadSpeed = true
+
+        } else if ( hadSpeed ) {
+
+            // if we had speed decrees in 
+            currentSpeed -= delta * deltaSpeed
+            if ( currentSpeed < 0 ){
+                currentSpeed = 0
+                hadSpeed = false
+                character.idle()
             }
         }
 
-        // actual charter move base on speed
-        if ( this.moveInfo.forceMove ) {
+        // actual character movement
+        if ( hadSpeed ){
 
-            const direction = this.moveInfo.direction.clone()
-            direction.x = -direction.x
 
-            // store CameraRotate
-            this.moveInfo.CameraRotate += direction.x * delta * this.moveInfo.speed * 0.2
-            // rotate camera and character
-            this.cameraGroup.rotation.y = lerp(this.moveInfo.CameraRotate,this.cameraGroup.rotation.y,0.85)
-            this.character.rotation.y = lerp(this.moveInfo.CameraRotate,this.character.rotation.y,0.4)
-            // move character base on "CameraRotate" and "speed"
-            const direction1 = this.moveInfo.direction.clone()
-            direction1.rotateAround( new THREE.Vector2(), this.cameraGroup.rotation.y )
+            const currentDirection = direction.clone()
 
-            this.group.position.x -= delta * this.moveInfo.speed * direction1.x
-            this.group.position.z += delta * this.moveInfo.speed * direction1.y
+            // rotate character
+            character.rotation.y = - direction.angle()  +  Math.PI / 2 +  cameraGroup1.rotation.y
 
+            currentDirection.rotateAround(new THREE.Vector2(0,0),-cameraGroup1.rotation.y)
+
+            reaCaster.set(this.group.position, new THREE.Vector3(
+                currentDirection.x,
+                0,
+                currentDirection.y,
+            ))
+
+            let isIntersect = false
+            const result = reaCaster.intersectObjects(collisionShapes)
+            if (result.length > 0){
+                if (result[0].distance < 3){
+                    currentDirection.multiplyScalar(0)
+                    isIntersect = true
+                }
+            }
+            if (!isIntersect){
+                currentDirection.multiplyScalar(currentSpeed)
+            }
+
+
+            // move character group
+            this.group.position.x += currentDirection.x
+            this.group.position.z += currentDirection.y
         }
 
-        //! fix  -- don't needed this right now   
-        // send out user position for other player
-        // if (this.playerGameId){
-        //     socket.volatile.emit("ugi", { 
-        //         px : this.group.position.x,
-        //         pz : this.group.position.z,
-        //         ry : this.character.rotation.y,
-        //         t  : this.getClock() ,
-        //         pi : this.playerGameId
-        //     })
-        // }
-
-    }
+    })
+  }
+  active(){
+    //! we need to update start position
+    // this.group.position.x = position.px 
+    this.isActive = true
+  }
+  deActive(){
+    this.isActive = false
+    this.playerGameId = null
+  }
 }

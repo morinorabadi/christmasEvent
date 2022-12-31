@@ -11,8 +11,9 @@ class ClientSocket
 {
     constructor(){
         //* create connection
-        const socket = io("http://localhost:5500")
-        // const socket = io("http://159.69.180.15:5500")
+        // const socket = io("http://localhost:5500")
+        console.log("socket url is :  http://159.69.180.15:5500");
+        const socket = io("http://159.69.180.15:5500")
         // const socket = io("https://conference.metaverse247.live/")
 
         let peerConnection = null

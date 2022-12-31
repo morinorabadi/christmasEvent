@@ -41,18 +41,22 @@ export default class Scene{
                     // create clock
                     const clock = new Clock(redlibcore)
 
+                    // create robot
+                    const robot = new Robot(redlibcore,loadedAssets.robot)
+
                     // create character 
-                    character = new UserCharacters(redlibcore,loadedAssets.character, () => clock.getClock())
+                    character = new UserCharacters(redlibcore, robot, world.collisionShapes,() => clock.getClock())
                     world.scene.add(character.group)
 
-                    // create robot test
-                    const robot = new Robot(redlibcore,loadedAssets.robot)
-                    world.scene.add(robot)
+
                     // create controller
                     const controller = new Controller(
                         redlibcore,
-                        (direction) => { character.setDirection(direction) },
-                        () => { character.setDirectionEnd() },
+                        (direction) =>  {character.getDirection(direction)},
+                        (direction) => { character.getCameraDirection(direction); },
+                        () => { character.end()},
+                        //! fix global isMobile
+                        true
                     )
 
                     // setup renderer
@@ -65,7 +69,7 @@ export default class Scene{
 
                 objects : [
                     // room
-                    {type : "gltf"   , src : "static/room.glb", loadOver : gltf    => {
+                    {type : "gltf"   , src : "static/room1.glb", loadOver : gltf    => {
                         loadedAssets.world = gltf
                     }},
                     // room

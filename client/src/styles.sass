@@ -15,6 +15,37 @@ body
     display: grid
     grid-template-columns: 4fr minmax(300px, 1fr)
 
+#contoroller
+    position: relative
+    top: 0
+    left: 0
+    height: 100vh
+    width: 100vw
+    
+#joy
+    // background: #f003
+    position: fixed
+    left: 0
+    
+    .big
+        fill : rgba(0,0,0,0.4)
+    .small
+        fill : rgba(0,0,0,0.6)
+
+#direction
+    // background: #0f03
+    position: fixed
+    right: 0
+    top: 0
+
+    circle
+        fill : rgba(0,0,0,0.6)
+    rect
+        fill : rgba(0,0,0,0.4)
+        stroke: #fff9
+        stroke-width: 3px
+
+
 // slider 
 .slider
     display: grid
