@@ -16,7 +16,8 @@ body
     grid-template-columns: 4fr minmax(300px, 1fr)
 
 #contoroller
-    position: relative
+    display: none
+    position: fixed
     top: 0
     left: 0
     height: 100vh
@@ -46,15 +47,8 @@ body
         stroke-width: 3px
 
 
-// slider 
-.slider
-    display: grid
-    grid-template-rows: auto 1fr 300px
-    background: red
-    border-left: 5px solid white 
-
-//slider childeren0
 .chat-box
+    display: none
     border-top: 5px solid #fff
 
     div
@@ -119,62 +113,59 @@ body
     background: #00f
     
 .self-user
-    background: #2b299b
-    color: white
-    border-bottom: 5px solid #fff
-    padding: 10px 5px
-    // font-size: 24px
+    position: fixed
+    left: calc( 40vw - 60px )
+    top: 2vh
 
-    span
-        font-weight: bold
-        font-size : 24px
     button
-
-        width: 80px
-        height:40px
         border: none
-        margin-left: 10px
-        border-radius: 5px
-        font-size: 18px
-    
+        width: 60px
+        height: 60px
+        margin: 0 5vw
+        background: blue
+        border-radius:20px
+
+        svg
+            fill : #fff
+            width: 50px
+            height: 50px
+
+
     video
-        width: 80%
-        margin: 0 auto
-        margin-top: 10px
-        border-radius: 40px
+        position: fixed
+
+        width: 200px
+        height: 200px
+
+        top: 80px
+        left: 35vw
+
         border: 5px solid white
+        border-radius: 50px
+
 
 .users
     background: #0d3792
-
+    position: fixed
     list-style: none
+
+    width: 200px
+
+    left: 0
+    top: 50vh
+
+    svg
+        width: 48px
+        height: 48px
+
+
     li.title
         border-bottom: 2px solid #fff
 
     li
         color: white
-        padding: 5px 10px
-        font-size: 24px
+        font-size: 12px
         display: flex
-        border-bottom: 1px dashed white 
-        justify-content: space-between
-
-        p.icon
-            display: inline
-            flex-shrink: end
-            padding: 2px 5px
-            border-radius: 5px
-            justify-items: end
-        p.type
-            margin-right: 8px
-
-        button
-            border: 0
-            outline: 0
-            height: 28px
-            margin-left: 5px
-            width: 30px
-
 
 
 
@@ -242,9 +233,17 @@ body
         border-bottom: 2px solid #aaa
         margin: 15px auto
 
+#scene
+    width: 100%
+    height: 100%
+
 #mainScene
-    display: flex
-    flex-flow: wrap
-    video
-        width: 480px
-        height: 480px
+    width: 100vw
+    height: 100vh
+
+.loading
+    width: 100vw
+    text-align: center
+    margin-top: 40vh
+    font-size: 40px
+    color: #fff

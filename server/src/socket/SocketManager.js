@@ -6,10 +6,13 @@
 
 const { v4: uuidV4 }=  require('uuid')
 
+
 const fakeAdmins = [
     { username : "qwer" ,password : "1234" },
     { username : "asdf" ,password : "1234" }
 ]
+
+
 class SocketManager
 {
     constructor( _io){
@@ -72,16 +75,16 @@ class SocketManager
                 response.status = 404
                 response.information.error = "not founded user"
             }
-            socket.emit("server-authentication",response)
             this.sendAllUsers()
+            socket.emit("server-authentication",response)
         })
         
         // set nickname 
         socket.on("set-nickname", (nickName) => {
             createDataSocket(false,nickName.username)
             const response = { status : 200, information : socket.data.username }
-            socket.emit("server-authentication",response)
             this.sendAllUsers()
+            socket.emit("server-authentication",response)
         })
 
         /**

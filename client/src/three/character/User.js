@@ -19,21 +19,28 @@ export default class UserCharacter
     const cameraGroup = new THREE.Group()
     const cameraGroup1 = new THREE.Group()
     cameraGroup1.position.y = 5
-    this.camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+    const canvasHtml = document.getElementById('scene')
+    const boundingClientRect = canvasHtml.getBoundingClientRect()
+
+    this.camera = new THREE.PerspectiveCamera( 65, boundingClientRect.width / boundingClientRect.height, 0.1, 1000 );
     this.camera.position.set(0,15,10)
     this.camera.lookAt(new THREE.Vector3(0,5,0))
     cameraGroup.add(this.camera)
     cameraGroup1.add(cameraGroup)
     // adding resize event dor resize camera
-    redlibcore.globalEvent.addCallBack('resize', () => { 
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+    redlibcore.globalEvent.addCallBack('resize', (sizes) => { 
+
+        this.camera.aspect = sizes.x / sizes.y
         this.camera.updateProjectionMatrix();
+
     })
     this.group.add(cameraGroup1)
 
     // online
     this.getClock = getClock
     this.playerGameId = null
+
     //! fix  -- don't needed this right now   
     // send out user position for other player
     // if (this.playerGameId){

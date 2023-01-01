@@ -6,7 +6,9 @@ export default class Renderer
         this.isActive = false
         
         // setup renderer
-        const renderer = new THREE.WebGLRenderer({canvas : document.getElementById('test')})
+        const canvasHtml = document.getElementById('scene')
+        const renderer = new THREE.WebGLRenderer({canvas : canvasHtml})
+
         renderer.setSize(window.innerWidth,window.innerHeight)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
@@ -18,7 +20,7 @@ export default class Renderer
 
         // handel resize event
         redlibcore.globalEvent.addCallBack("resize", (sizes) => {
-            renderer.setSize(sizes.x, sizes.y)
+            renderer.setSize(sizes.x,sizes.y)
         })
     }
 

@@ -5,6 +5,10 @@ import InputConverter from '../../redlibCore/utils/InputConverter'
 export default class Controller
 {
     constructor(redlibcore, getDirection,getCameraDirection , end, isMobile){
+
+        this.parentHtml = document.getElementById('contoroller')
+        this.parentHtml.style.display = "none"
+
         // events
         this.getDirection = getDirection
         this.getCameraDirection = getCameraDirection
@@ -43,6 +47,16 @@ export default class Controller
         this.cameraAllow = false
         this.lastCameraDirection = null
         
+    }
+    
+    active(){
+        this.parentHtml.style.display = "block"
+        this.isActive = true
+    }
+
+    deActive(){
+        this.parentHtml.style.display = "none"
+        this.isActive = false
     }
 
     process(){

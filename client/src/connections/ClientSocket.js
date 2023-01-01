@@ -11,10 +11,15 @@ class ClientSocket
 {
     constructor(){
         //* create connection
-        // const socket = io("http://localhost:5500")
-        console.log("socket url is :  http://159.69.180.15:5500");
-        const socket = io("http://159.69.180.15:5500")
-        // const socket = io("https://conference.metaverse247.live/")
+
+        const urls = "http://localhost:5500"
+        // const urls = "http://192.168.1.98:5500"
+        // const urls = "http://159.69.180.15:5500"
+        // const urls = "https://conference.metaverse247.live"
+
+        console.log("socket url is : ",urls);
+        const socket =  io(urls)
+ 
 
         let peerConnection = null
         let browserWebRTC = null
@@ -66,6 +71,10 @@ class ClientSocket
         this.event.addEvent("new-audio-src")
         this.event.addEvent("remove-video-src")
         this.event.addEvent("remove-audio-src")
+
+        // serverWebRTC event
+        this.event.addEvent("start-game")
+
 
         // add chat events
         this.event.addEvent("new-message")

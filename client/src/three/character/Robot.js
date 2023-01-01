@@ -30,7 +30,7 @@ export default class Characters extends THREE.Object3D
 
         // store some information
         let currentState = "" // idle | walk
-        let currentAnimationIndex = 0
+        let currentAnimationIndex = 0 
         let currentAnimation = animations[0]
 
         function newAnimation(animation){
@@ -52,7 +52,6 @@ export default class Characters extends THREE.Object3D
         this.idle = () => {
             if ( currentState == "idle" ){ return }
             currentState = "idle"
-            console.log("idle");
 
             currentAnimationIndex = Math.floor(Math.random()*3)
             const idleAnimationObject = idleAnimation[currentAnimationIndex]
@@ -68,7 +67,6 @@ export default class Characters extends THREE.Object3D
         this.walk = () => {
             if ( currentState == "walk" ){ return }
             currentState = "walk"
-            console.log("walk");
 
             currentAnimationIndex = Math.floor(Math.random()*2)
             const walkAnimationObject = walkAnimation[currentAnimationIndex]
@@ -81,25 +79,3 @@ export default class Characters extends THREE.Object3D
         this.idle()
     }
 }
-
-        // let animationCount = 0 
-        // setInterval(() => {
-        //     console.log("ok");
-        //     const current = animations[animationCount]
-
-        //     animationCount++
-        //     if (animationCount > animations.length-1 ){
-        //         animationCount = 0
-        //     }
-        //     const next = animations[animationCount]
-            
-        //     current.crossFadeTo(next,0.5)
-
-        //     console.log(next._clip.name);
-        //     console.log(next._clip.name);
-
-        //     next.play()
-        //     next.enabled = true
-        //     next.crossFadeFrom(current,0.5)
-            
-        // },3000)
