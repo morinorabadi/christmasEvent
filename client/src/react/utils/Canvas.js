@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react'
+import Contoroller from './Contoroller'
 
 export default function Canvas({scene}) {
     useEffect(() => {
-        scene.init()
-        scene.active()
+      scene.init()
     }, [])
   return (
-    <canvas id="scene" ></canvas>
+    <>
+      <Contoroller/>
+      <canvas id="scene" ></canvas>
+    </>
   )
 }

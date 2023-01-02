@@ -7,16 +7,21 @@ const TIME_TO_RECONNECTED = 10000;
 
 class WebRtcConnection
 {
-  constructor(chanelLabel, onMessege){
+  constructor(chanelLabel, onUpdate){
 
     const peerConnection = new RTCPeerConnection({});
 
-    // crete datachanel
+    // crete dataChanel
     const dataChannel = peerConnection.createDataChannel(chanelLabel);
 
-    // masege event come from client
-    function onMessagereceived(event) { onMessege(event) }
-    dataChannel.onmessage = (event) => { onMessagereceived(event) }
+    // message event come from client
+    function onMessageReceived(event) {
+      const { data } = event
+      const json = JSON.parse(data)
+      onUpdate(json)
+    }
+
+    dataChannel.addEventListener('message', onMessageReceived);
 
     // this object create and timer will be active
     // and offer send to client 

@@ -9,9 +9,6 @@ import SelfUser from './username/SelfUser';
 import TestVideoAudio from './Connection/TestVideoAudio';
 import { getSocketEvent } from '../connections/ClientSocket'
 
-// utils
-import Loading from './utils/Loading';
-import Canvas from './utils/Canvas';
 
 // three js
 import Scene from '../three/Scene'
@@ -21,9 +18,12 @@ const redLibCore = new RedLib({ fps : 30 })
 
 const scene = new Scene(redLibCore)
 
+// utils
+import Loading from './utils/Loading';
+import Canvas from './utils/Canvas';
+
 
 // connection
-// import SelfVideo from './videoConnection/SelfVideo';
 import ChatBox from './Connection/ChatBox';
 
 export default function App() {
@@ -65,7 +65,7 @@ export default function App() {
     <div>
       { isUsernameSet ?
          <>
-          <div id="mainScene" >
+          <div id="main" >
           {
             isLoadOver ?
             <Canvas scene={scene} />

@@ -10,11 +10,13 @@ export default class TestVideoAudio
             const video = document.createElement('video')
             video.setAttribute('id', `${socketId}video`)
             video.autoplay = true
+            video.playsInline = true
             video.srcObject = src
-            document.getElementById('mainScene').append(video)
+            document.getElementById('main').append(video)
         })
 
         event.addCallBack('remove-video-src', ({socketId}) => {
+            console.log("ok");
             document.getElementById(`${socketId}video`).remove()
         })
 
@@ -23,7 +25,7 @@ export default class TestVideoAudio
             audio.setAttribute('id', `${socketId}audio`)
             audio.autoplay = true
             audio.srcObject = src
-            document.getElementById('mainScene').append(video)
+            document.getElementById('main').append(video)
         })
 
         event.addCallBack('remove-audio-src', ({socketId}) => {

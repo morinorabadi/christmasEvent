@@ -129,7 +129,7 @@ export default class BrowserWebRTC
             })
         })
 
-        if (config.should_create_offer) { 
+        if (config.createOffer) { 
             // create reliable data chanel between peers for some event 
             dataChanelSetup(peerConnection.createDataChannel("information", { ordered : true }), socket.id)
             
@@ -176,6 +176,8 @@ export default class BrowserWebRTC
                 await peer.setLocalDescription(local_description)
 
                 socket.emit('relaySessionDescription', {'peer_id': peer_id, 'session_description': local_description});
+            } else {
+                console.log(" connected successful ");
             }
         } catch (error) {
             alert("Answer setLocalDescription failed!"); 
@@ -194,7 +196,7 @@ export default class BrowserWebRTC
 
     //! fix this
     socket.on('user-left-event', (socketID) => {
-        console.log('Signaling server said to remove peer:',socketID);
+        console.log('user left',socketID);
         if (peers.has(socketID)){
             const peer = peers.get(socketID)
             peer.close()
@@ -241,7 +243,7 @@ export default class BrowserWebRTC
             })
             
             if ( type == "video" ){
-                document.getElementById('selfVideo').srcObject = stream
+                document.getElementById('selfvideo').srcObject = stream
             }
 
             return true

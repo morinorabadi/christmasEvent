@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { lerp } from 'three/src/math/MathUtils'
 
 export default class UserCharacter
 {
@@ -40,18 +39,7 @@ export default class UserCharacter
     // online
     this.getClock = getClock
     this.playerGameId = null
-
-    //! fix  -- don't needed this right now   
-    // send out user position for other player
-    // if (this.playerGameId){
-    //     socket.volatile.emit("ugi", { 
-    //         px : this.group.position.x,
-    //         pz : this.group.position.z,
-    //         ry : this.character.rotation.y,
-    //         t  : this.getClock() ,
-    //         pi : this.playerGameId
-    //     })
-    // }
+    this.sendData = null
     
     
     // direction
@@ -150,15 +138,29 @@ export default class UserCharacter
             this.group.position.z += currentDirection.y
         }
 
+
+        // send out user position for other player
+        if (this.playerGameId){
+            this.sendData({ 
+                px : this.group.position.x,
+                pz : this.group.position.z,
+                ry : character.rotation.y,
+                t  : this.getClock() ,
+                i : this.playerGameId
+            })
+        }
+
     })
   }
-  active(){
+  active(props){
     //! we need to update start position
-    // this.group.position.x = position.px 
+    this.playerGameId = props.gameId
+    this.sendData = props.sendData
     this.isActive = true
   }
   deActive(){
     this.isActive = false
     this.playerGameId = null
+    this.sendData = null
   }
 }

@@ -23,6 +23,7 @@ class ClientSocket
 
         let peerConnection = null
         let browserWebRTC = null
+        let serverWebRTC = null
         let selfUser = null
 
         //* global functions and variable
@@ -56,6 +57,11 @@ class ClientSocket
                         return selfUser
                     }
                     break
+                
+                case "start-game":
+                    // * start game 
+                    socket.emit("start-game")
+                    break
             }
         }
 
@@ -72,20 +78,12 @@ class ClientSocket
         this.event.addEvent("remove-video-src")
         this.event.addEvent("remove-audio-src")
 
-        // serverWebRTC event
-        this.event.addEvent("start-game")
-
-
         // add chat events
         this.event.addEvent("new-message")
 
-        // ! convert this events 
-        // game
-        this.onStartGame = null
-        this.onUpdateData = null
-
-        // property
-        this.gameId = null
+        // serverWebRTC game event  
+        this.event.addEvent("start-game")
+        this.event.addEvent("update-game")
 
         // handel events
         socket.on('connect', () => {
@@ -114,17 +112,11 @@ class ClientSocket
                 }
             })
 
+            // video and audio
             browserWebRTC = new BrowserWebRTC(socket,this.event)
 
-            //! not working
-            // room create webrtc peer connection
-            socket.on("room-start-game", response => {
-                if (this.responseCheck(response)){
-                    this.gameId = response.gameId
-                    // this.onStartGame()
-                }
-            })
-
+            
+            // chat app
             socket.on("new-message", response => {
                 console.log("new-message");
                 if (this.responseCheck(response)){
@@ -132,6 +124,27 @@ class ClientSocket
                 }
             })
 
+            /**
+             * server WebRTC
+             */
+
+            // handel request from server to create webrtc peer connection
+            socket.on("create-server-webrtc", option => {
+                serverWebRTC = new ServerWebRTC()
+                serverWebRTC.createConnection({
+                    onUpdate :  (data) => {this.event.callEvent("update-game", data)},
+                    emit : this.emit,
+                    ...option
+                })
+        
+            })
+
+            // start game loop after peer-to-peer connection is created
+            socket.on("server-start-game",({gameId}) => {
+                this.event.callEvent("start-game", {gameId, sendData : serverWebRTC.sendData})
+                console.log("game start event");
+            })
+            
         })
     }
 

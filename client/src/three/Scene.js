@@ -9,7 +9,7 @@ import Robot from './character/Robot'
 import Controller from './utils/Controller'
 
 // socket 
-import { getSocketEvent } from '../connections/ClientSocket'
+import { handelEvent, getSocketEvent } from '../connections/ClientSocket'
 
 export default class Scene{
     constructor(redlibcore){
@@ -21,10 +21,10 @@ export default class Scene{
         let character = null
         let controller = null
 
-        this.active = () => {
+        this.active = (props) => {
             if ( isLoadOver ) { 
                 renderer.active()
-                character.active()
+                character.active(props)
                 controller.active()
             }
         }
@@ -104,6 +104,14 @@ export default class Scene{
             renderer = new Renderer(redlibcore, world.scene,character.camera)
 
             redlibcore.sizes.resize()
+            
+            getSocketEvent().addCallBack("start-game", ( props ) => {
+                console.log("start game event and id is : ", props);
+                this.active(props)
+            })
+            
+            // send start-game to socket than to server
+            handelEvent("start-game")
         }
     }
 }

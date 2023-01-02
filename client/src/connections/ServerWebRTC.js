@@ -3,7 +3,7 @@ export default class ServerWebRTC
     constructor(){
         let dataChannel = null
         
-        this.createConnection = async ({ localDescription, chanelLabel, emit, onMessege: onMessene}) => {
+        this.createConnection = async ({ localDescription, chanelLabel, emit, onUpdate}) => {
     
             const localPeerConnection = new RTCPeerConnection({});
             
@@ -21,7 +21,7 @@ export default class ServerWebRTC
                 dataChannel = channel;
                 dataChannel.onmessage = ({data}) => { 
                     const gameInfo = JSON.parse(data) 
-                    onMessene(gameInfo)
+                    onUpdate(gameInfo)
                 }
             }
 
@@ -30,7 +30,7 @@ export default class ServerWebRTC
             // answer 
             const answer = await localPeerConnection.createAnswer();
             await localPeerConnection.setLocalDescription(answer);
-            emit("peer-connection-answer", {answer})
+            emit("peer-connection-answer", answer)
     
             } catch (error) {
             localPeerConnection.close();
@@ -38,17 +38,18 @@ export default class ServerWebRTC
             }
         }
 
-        this.sendData = (data) => {
+        this.sendData = (_data) => {
+            const data = JSON.stringify(_data)
             if (dataChannel){ dataChannel.send(data) }
         }
 
         this.close = () => {
             console.log("\n\nclose event is fire\n\n");
             if (dataChannel) {
-                // fix remove event listener
+                //! fix remove event listener
                 dataChannel.removeEventListener('message', onMessage);
             }
-            // fix
+            //! fix peer-connection-delete event
             emit("peer-connection-delete")
             return RTCPeerConnection.prototype.close.apply(this, arguments);
         }
