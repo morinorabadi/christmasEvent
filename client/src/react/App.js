@@ -5,25 +5,26 @@ import SetUsername from './username/SetUsername'
 import Users from './username/Users';
 import SelfUser from './username/SelfUser';
 
-// test
-import TestVideoAudio from './Connection/TestVideoAudio';
-import { getSocketEvent } from '../connections/ClientSocket'
+// utils
+import Loading from './utils/Loading';
+import Canvas from './utils/Canvas';
 
+// socket
+import { getSocketEvent } from '../connections/ClientSocket'
 
 // three js
 import Scene from '../three/Scene'
 import RedLib from '../redlibCore/core'
 
+
+// create redlib instance
 const redLibCore = new RedLib({ fps : 30 })
 
+// create three scene
 const scene = new Scene(redLibCore)
 
-// utils
-import Loading from './utils/Loading';
-import Canvas from './utils/Canvas';
-
-
 // connection
+// ! fix chat
 import ChatBox from './Connection/ChatBox';
 
 export default function App() {
@@ -47,8 +48,6 @@ export default function App() {
         setUserName.current.error(response.information.error)
       }
     })
-
-    new TestVideoAudio()
 
     scene.load(() => {
       setIsLoadOver(true)

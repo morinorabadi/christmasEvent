@@ -9,7 +9,7 @@ export default class UserCharacter
     this.isActive = false
 
     // character
-    const character = characterModel
+    const character = characterModel.generate()
     this.group.add(character)
 
     const reaCaster = new THREE.Raycaster()

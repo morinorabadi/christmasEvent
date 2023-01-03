@@ -90,7 +90,7 @@ class WebRtcConnection
         reconnectionTimer = null;
       }
       if (dataChannel) {
-        dataChannel.removeEventListener('message', onMessagereceived);
+        dataChannel.removeEventListener('message', onMessageReceived);
       }
       peerConnection.close();
     };

@@ -5,8 +5,9 @@ import Renderer from './utils/Renderer';
 import AssetsLoader from './utils/AssetsLoader'
 import Clock from './utils/Clock';
 import UserCharacters from './character//User';
-import Robot from './character/Robot'
+import RobotGenerator from './character/Robot'
 import Controller from './utils/Controller'
+import Enemys from './character/Enemy'
 
 // socket 
 import { handelEvent, getSocketEvent } from '../connections/ClientSocket'
@@ -20,11 +21,16 @@ export default class Scene{
         let renderer = null
         let character = null
         let controller = null
+        let enemys = null
 
         this.active = (props) => {
             if ( isLoadOver ) { 
                 renderer.active()
                 character.active(props)
+
+                enemys.init(props.gameId)
+                enemys.active()
+                
                 controller.active()
             }
         }
@@ -83,13 +89,15 @@ export default class Scene{
             const clock = new Clock(redlibcore)
 
             // create robot
-            const robot = new Robot(redlibcore,loadedAssets.robot)
+            const robotGenerator = new RobotGenerator(redlibcore,loadedAssets.robot)
 
             // create character 
-            character = new UserCharacters(redlibcore, robot, world.collisionShapes,() => clock.getClock())
+            character = new UserCharacters(redlibcore, robotGenerator, world.collisionShapes,() => clock.getClock())
             world.scene.add(character.group)
 
-
+            enemys = new Enemys(redlibcore,robotGenerator,character.camera,() => clock.getClock())
+            world.scene.add(enemys.group)
+            
             // create controller
             controller = new Controller(
                 redlibcore,
@@ -103,13 +111,13 @@ export default class Scene{
             // setup renderer
             renderer = new Renderer(redlibcore, world.scene,character.camera)
 
-            redlibcore.sizes.resize()
             
             getSocketEvent().addCallBack("start-game", ( props ) => {
-                console.log("start game event and id is : ", props);
                 this.active(props)
             })
-            
+
+            redlibcore.sizes.resize()
+
             // send start-game to socket than to server
             handelEvent("start-game")
         }

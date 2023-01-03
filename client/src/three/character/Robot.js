@@ -1,18 +1,38 @@
 import * as THREE from 'three'
-export default class Characters extends THREE.Object3D
-{
-    constructor(redlibcore ,model ){
-        super()
+import { clone } from 'three/examples/jsm/utils/SkeletonUtils'
 
-        this.add(model.scene)
+export default class CharactersGenerator
+{
+    constructor(redlibcore, model ){
+
+        this.generate = () => {
+            return new Robot(redlibcore, model)
+        }
+
+        let cameraPosition = null
+        this.generateEnemy = (camera) => {
+            if (!cameraPosition){
+                cameraPosition = new CameraPosition(redlibcore,camera)
+            }
+            return new EnemyRobot(redlibcore, model, cameraPosition)
+        }
+    }
+}
+
+class Robot extends THREE.Object3D
+{
+    constructor(redlibcore ,model){
+        super()
+        const robot = clone(model.scene)
+        this.add( robot )
         
         // clean up Material
-        model.scene.traverse( child => { if ( child.material ) {
+        robot.traverse( child => { if ( child.material ) {
             child.material.metalness = 0
         }});
 
         // create animation mixer and animate
-        const mixer = new THREE.AnimationMixer(model.scene)
+        const mixer = new THREE.AnimationMixer(robot)
         mixer.timeScale = 0.001
 
         // update mixer
@@ -77,5 +97,95 @@ export default class Characters extends THREE.Object3D
         }
         
         this.idle()
+    }
+}
+
+class CameraPosition
+{
+  constructor(redlibcore,camera){
+
+    // global calculate camera position
+    this.videoCount = 0
+    let isVideoProcessActive = false
+
+    const calculateCameraPosition = () => {
+        if (this.videoCount > 0){
+            isVideoProcessActive = true
+        } else {
+            isVideoProcessActive = false
+        }
+    }
+
+
+    this.activeCameraPosition = () => {
+        this.videoCount++
+        calculateCameraPosition()
+    }
+
+    this.deActiveCameraPosition = () => {
+        this.videoCount--
+        calculateCameraPosition()
+    }
+
+    this.cameraPosition = new THREE.Vector3()
+    redlibcore.globalEvent.addCallBack("process", () =>{
+        if ( !isVideoProcessActive ){ return }
+        camera.getWorldPosition(this.cameraPosition)
+    })
+
+  }
+}
+
+class EnemyRobot extends Robot
+{
+    constructor(redlibcore ,model, cameraPosition){
+        super(redlibcore ,model)
+
+        let isVideoActive = false
+        let processId = null
+
+        let monitor = new THREE.Mesh(
+            new THREE.PlaneGeometry(3,3),
+            new THREE.MeshBasicMaterial()
+        )
+        monitor.position.y = 12
+
+
+        this.activeVideo = (src,socketId) => {
+            if (isVideoActive){ return }
+            isVideoActive = true
+            cameraPosition.activeCameraPosition()
+
+            const video = document.createElement("video")
+            video.playsInline = true
+            video.autoplay = true
+            video.setAttribute('id', `${socketId}video`)
+            document.body.append(video)
+
+            monitor.material.map = new THREE.VideoTexture(video)
+            video.srcObject = src
+            video.play()
+
+            this.add(monitor)
+
+            //! fix process id and make it global 
+            processId = redlibcore.globalEvent.addCallBack('process',() => {
+                monitor.lookAt(cameraPosition.cameraPosition)
+            })
+
+        }
+
+        this.deActiveVideo = (socketId) => {
+            // remove process video 
+            if (processId){
+                redlibcore.globalEvent.removeCallBack('process',processId)
+            }
+            this.remove(monitor)
+            document.getElementById(`${socketId}video`).remove()
+            
+            isVideoActive = false
+            processId = null
+        }
+
     }
 }

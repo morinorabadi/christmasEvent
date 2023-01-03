@@ -52,6 +52,7 @@ export default class Controller
     active(){
         this.parentHtml.style.display = "block"
         this.isActive = true
+        this.resize({ x : window.innerWidth, x : window.innerHeight })
     }
 
     deActive(){

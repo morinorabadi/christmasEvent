@@ -37,12 +37,26 @@ class SocketManager
             sockets.delete(socket.id)
 
             // clear socket in events if exist and tell to others
-            const index = socketsInEvent.indexOf(socket.id)
-            if (index !== -1){
-                socketsInEvent.splice(index,1)
+            const eventIndex = socketsInEvent.indexOf(socket.id)
+            if (eventIndex !== -1){
+                socketsInEvent.splice(eventIndex,1)
                 io.to(socketsInEvent).emit("user-left-event", socket.id)
             }
-            sendAllUsers()
+
+            // clear socket in game if exist and tell to others
+            const gameIndex = socketsInGame.indexOf(socket.id)
+            if (gameIndex !== -1){
+                const playerGameID = socket.data.information.gameId
+                socketsInGame.splice(gameIndex,1)
+                io.to(socketsInGame).emit("game-player-left", playerGameID)
+                
+                peerConnections.get(socket.id).close()
+                peerConnections.delete(socket.id)
+
+                delete gameInfo[playerGameID]
+
+            }
+
         })
 
 
@@ -167,7 +181,10 @@ class SocketManager
          */
 
         // start game event called when load is over 
-        socket.on("start-game", () => { createRTCConnection(socket) } )
+        socket.on("start-game", () => {
+            createRTCConnection(socket)
+
+        })
 
         // after we emit "create-webrtc" we wait for answer from client
         socket.on("peer-connection-answer", (answer) => { applyAnswer(socket,answer) })
@@ -230,20 +247,20 @@ class SocketManager
      */
     // game peerConnection and information
     const peerConnections = new Map()
-    const gameInfo = new Map()
-
+    const gameInfo = {}
+    const socketsInGame = []
     // we generate some simple ID to decrees bites send from server to client
     let lastPlayerGameId = 0
     function createGameId(){
         lastPlayerGameId++
         const id = lastPlayerGameId.toString()
-        gameInfo.set(id,{ 
+        gameInfo[id] = { 
             px : lastPlayerGameId,
             pz : 0,
             ry : 0,
             t  : Date.now() ,
             i : id
-        })
+        }
         return id
     }
 
@@ -275,8 +292,24 @@ class SocketManager
                 await connection.applyAnswer(answer);
 
                 // if request reach here everything is good
+                //  apply socket
+                socketsInGame.push(socket.id)
                 const id = createGameId()
+                socket.data.information.gameId = id
+
+                // create response
+                const response = []
+                socketsInGame.forEach(id => {
+                    const gameId = sockets.get(id).data.information.gameId 
+                    response.push({
+                        gameId : gameId ,
+                        socketId : id,
+                        gameInfo : gameInfo[gameId],
+                    })
+                })
+
                 socket.emit("server-start-game", {status : 200, gameId : id} )
+                io.to(socketsInGame).emit("game-player-join", response)
             } catch (error) {
                 console.log(error);
             }
@@ -285,8 +318,8 @@ class SocketManager
 
     function updateGameInfo(data) {
         // data come from clientPeerConnection
-        const lastInfo = gameInfo.get(data.i)
-        if (data.t > lastInfo.t) { gameInfo.set(data.i,data) }
+        const lastInfo = gameInfo[data.i]
+        if (data.t > lastInfo.t) { gameInfo[data.i] = data }
     }
 
     /**
@@ -299,12 +332,11 @@ class SocketManager
     function startGame(){ 
         isGameStart = true
         loopId = setInterval(() => {
-            console.log("send out data");
-            const data = JSON.stringify(Array.from( gameInfo.values() ))
+            const data = JSON.stringify(gameInfo)
             peerConnections.forEach( (peer , _ ) => {
                 peer.sendData(data)
             });
-        }, 1000)
+        }, 80)
     }
 
     // end game loop

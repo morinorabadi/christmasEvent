@@ -84,6 +84,8 @@ class ClientSocket
         // serverWebRTC game event  
         this.event.addEvent("start-game")
         this.event.addEvent("update-game")
+        this.event.addEvent("player-join")
+        this.event.addEvent("player-left")
 
         // handel events
         socket.on('connect', () => {
@@ -142,9 +144,15 @@ class ClientSocket
             // start game loop after peer-to-peer connection is created
             socket.on("server-start-game",({gameId}) => {
                 this.event.callEvent("start-game", {gameId, sendData : serverWebRTC.sendData})
-                console.log("game start event");
             })
             
+            socket.on("game-player-join",(newPlayer) => {
+                this.event.callEvent("player-join", newPlayer )
+            })
+
+            socket.on("game-player-left",(playerGameID) => {
+                this.event.callEvent("player-left", playerGameID)
+            })
         })
     }
 
@@ -161,7 +169,7 @@ class ClientSocket
 
 // create socket instance
 export function init() {
-    console.log("init");
+    console.log("init clientSocket");
     if (!clientSocket){
         clientSocket = new ClientSocket()
     }
