@@ -117,9 +117,9 @@ class SocketManager
                 console.log("ERROR multi authentication")
                 return
             }
-            socket.data.authentication = true
             // log some info
             console.log(socket.id + " authentication ")
+            socket.data.authentication = true
             
             // start browser WebRTCconnection 
             browserWebRTCManager.newClient(socket)
@@ -149,12 +149,9 @@ class SocketManager
         const socketsID = []
         const response = { status : 200 , information : [] }
         sockets.forEach((socket, socketId) => {
-            if ( socket.data ){
+            if ( socket.data.id ){
                 socketsID.push(socketId)
-                response.information.push({
-                    ...socket.data,
-                    id : socketId,
-                })
+                response.information.push(socket.data)
             }
         })
         io.to(socketsID).emit("server-update-users", response)
@@ -162,6 +159,7 @@ class SocketManager
     // create data for sockets
     function createSocketData(socket,isAdmin,username) {
         socket.data = {
+            id : socket.id,
             isAdmin,
             username : username,
 
@@ -244,7 +242,7 @@ class SocketManager
                 await connection.applyAnswer(answer);
 
                 // if request reach here everything is good
-                //  apply socket
+                // apply socket
                 socketsInGame.push(socket.id)
                 const id = createGameId()
                 socket.data.gameId = id

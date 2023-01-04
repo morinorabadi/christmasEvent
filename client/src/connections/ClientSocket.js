@@ -34,6 +34,9 @@ class ClientSocket
         this.handelEvent = async (type) => {
             switch (type) {
 
+                case "get-media":
+                    return browserWebRTC.getMedias()
+
                 case "active-cam":
                     return await browserWebRTC.activeCam()
                 case "active-mic":

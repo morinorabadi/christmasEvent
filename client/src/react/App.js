@@ -50,7 +50,12 @@ export default function App() {
     })
 
     scene.load(() => {
-      setIsLoadOver(true)
+      
+      // fake loading time
+      setTimeout(() => {
+        setIsLoadOver(true)
+      }, 8000)
+
     })
 
     return () => {

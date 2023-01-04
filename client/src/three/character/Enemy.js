@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { getSocketEvent } from '../../connections/ClientSocket'
+import { getSocketEvent, handelEvent } from '../../connections/ClientSocket'
 
 export default class Enemys
 {
@@ -55,9 +55,42 @@ export default class Enemys
     })
 
     /**
+     * media functions
+     */
+    const addVideo = ({src, socketId}) => {
+        console.log("new media source");
+        const enemy = Object.values(playersObject).find(enemy => enemy.socketId == socketId )
+        if ( enemy ){
+            enemy.model.activeVideo(src,socketId)
+        }
+    }
+
+    const removeVideo = ({socketId}) => {
+        console.log("remove-video-src");
+        const enemy = Object.values(playersObject).find(enemy => enemy.socketId == socketId )
+        if ( enemy ){
+            enemy.model.deActiveVideo(socketId)
+        }
+    }
+
+
+    const addAudio = ({src, socketId}) => {
+        const audio = document.createElement('audio')
+        audio.setAttribute('id', `${socketId}audio`)
+        audio.autoplay = true
+        audio.srcObject = src
+        document.getElementById('main').append(audio)
+    }
+
+    const removeAudio = ({socketId}) => {
+        document.getElementById(`${socketId}audio`).remove()
+    }
+
+    /**
      * listen to socket event
      */
     const event = getSocketEvent()
+
 
     // new player join
     event.addCallBack('player-join',(playersInfo) => {
@@ -87,6 +120,18 @@ export default class Enemys
                 }
             }
         })
+        // get media stream
+        handelEvent("get-media").then((mediaSource) => {
+            console.log("get media source");
+            Object.keys(mediaSource).forEach(socketId => {
+                if ( mediaSource[socketId].audio ){
+                    addAudio({src : mediaSource[socketId].audio , socketId : socketId})
+                }
+                if ( mediaSource[socketId].video ){
+                    addVideo({src : mediaSource[socketId].video , socketId : socketId})
+                }
+            })
+        })
     })
 
     // some player left 
@@ -97,37 +142,15 @@ export default class Enemys
     })
 
     // active video source
-    event.addCallBack('new-video-src', ({src, socketId}) => {
-        console.log("new video src");
-        const enemy = Object.values(playersObject).find(enemy => enemy.socketId == socketId )
-        if ( enemy ){
-            enemy.model.activeVideo(src,socketId)
-        }
-    })
-
+    event.addCallBack('new-video-src', (object) => { addVideo(object)})
     // remove video source
-    event.addCallBack('remove-video-src', ({socketId}) => {
-        console.log("remove-video-src");
-        const enemy = Object.values(playersObject).find(enemy => enemy.socketId == socketId )
-        if ( enemy ){
-            enemy.model.deActiveVideo(socketId)
-        }
-    })
+    event.addCallBack('remove-video-src', (object) => { removeVideo(object) })
 
-    //! fix audio track
-    event.addCallBack('new-audio-src', ({src, socketId}) => {
-        const audio = document.createElement('audio')
-        audio.setAttribute('id', `${socketId}audio`)
-        audio.autoplay = true
-        audio.srcObject = src
-        document.getElementById('main').append(video)
-    })
+    // active audio source
+    event.addCallBack('new-audio-src', (object) => { addAudio(object) })
+    // remove audio source
+    event.addCallBack('remove-audio-src', (object) => { removeAudio(object) })
 
-    event.addCallBack('remove-audio-src', ({socketId}) => {
-        document.getElementById(`${socketId}audio`).remove()
-    })
-    
-    
 
     // handel information came from server game loop
     event.addCallBack('update-game',(gameInfo) => {

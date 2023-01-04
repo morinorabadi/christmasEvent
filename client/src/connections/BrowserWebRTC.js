@@ -99,6 +99,7 @@ export default class BrowserWebRTC
 
         function dataChanelMessage(event) {
             const data = JSON.parse(event.data)
+            console.log(data);
             switch (data.text) {
                 case "close-media":
                     if (data.type == "video"){
@@ -129,10 +130,6 @@ export default class BrowserWebRTC
 
         // listen to media come from others peer
         peerConnection.ontrack = (event) => {
-            console.log("on track");
-            // todo ontrack work fine
-            // todo problem is enemy is loaded
-            // todo so before load scene listen to this event and them remove it
             if (event.track.kind == "audio"){
                 peerMediaSrc[peerId].audio = event.streams[0]  
                 globalEvent.callEvent("new-audio-src", {socketId : peerId ,src : event.streams[0]})
@@ -239,6 +236,13 @@ export default class BrowserWebRTC
             console.log("ERROR peer is not founded");
         }
     })
+
+    /**
+     * media
+     */
+    this.getMedias = () => {
+        return peerMediaSrc
+    }
 
     // active mic and cam
     const activeCamOrMic = async (type) => {
