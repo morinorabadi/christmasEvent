@@ -100,7 +100,7 @@ class ClientSocket
             // user name event
             socket.on("server-authentication", response => {
                 this.event.callEvent("server-authentication",response)
-                if (response.status == 200){ socket.emit('join-to-event') }
+                if (response.status == 200){ socket.emit('authentication-done') }
             })
 
             

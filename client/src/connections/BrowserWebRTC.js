@@ -3,6 +3,7 @@ export default class BrowserWebRTC
   constructor(socket,globalEvent){
     let localMediaStream = []
     const peers = new Map()
+    const peersState = new Map() // new | connected | try
     const dataChanels = new Map()
     const peerMediaSrc = {}
 
@@ -45,13 +46,27 @@ export default class BrowserWebRTC
         peers.clear()
     }
 
-    // create peer connection with others
-    socket.on('server-create-peer-connection', async (config) => {
-        const peer_id = config.peer_id;
-        console.log(`your id is ${socket.id} and peer_id is ${peer_id}`);
+    function createNewConnection(createOffer,peerId) {
+        console.log("createNewConnection\nyour are")
+        const state = peersState.get(peerId)
+        if (state == "try"){
+            console.log("something is wrong in createNewConnection");
+            return
+        }
+        peersState.set(peerId,"try")
+        if (createOffer) { 
+            // do offer
+            doOffer(peerId)
+        } else {
+            // send out im ready
+            socket.emit("webrtc-state-change", {type : "wait-to-receive-offer", peerId : peerId})
+        }
+    }
 
+
+    // create peer connection with others
+    socket.on('browser-create-peer-connection', async ({peerId, createOffer}) => {
         const peerConnection = new RTCPeerConnection({
-            // sdpSemantics: 'unified-plan',
             iceServers: [
                 {
                     urls: [
@@ -64,13 +79,15 @@ export default class BrowserWebRTC
             ]}
         )
 
-        peers.set(peer_id, peerConnection)
+        // add peerConnection to map
+        peers.set(peerId, peerConnection)
+        peersState.set(peerId, "new")
 
         // listen on icecandidate event
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
                 socket.emit('relayICECandidate', {
-                    'peer_id': peer_id, 
+                    'peerId': peerId, 
                     'ice_candidate': {
                         'sdpMLineIndex': event.candidate.sdpMLineIndex,
                         'candidate': event.candidate.candidate
@@ -85,12 +102,12 @@ export default class BrowserWebRTC
             switch (data.text) {
                 case "close-media":
                     if (data.type == "video"){
-                        globalEvent.callEvent("remove-video-src", { socketId : peer_id })
-                        peerMediaSrc[peer_id].audio = null
+                        globalEvent.callEvent("remove-video-src", { socketId : peerId })
+                        peerMediaSrc[peerId].audio = null
                     } else 
                     if (data.type == "audio"){
-                        globalEvent.callEvent("remove-audio-src", { socketId : peer_id })
-                        peerMediaSrc[peer_id].video = null
+                        globalEvent.callEvent("remove-audio-src", { socketId : peerId })
+                        peerMediaSrc[peerId].video = null
                     }
                     break;
             }
@@ -104,104 +121,111 @@ export default class BrowserWebRTC
 
         // listen to data chanel comes from other
         peerConnection.ondatachannel = (event) => {
-
             dataChanelSetup(event.channel,socket.id)
         }
 
-        peerMediaSrc[peer_id] = { video : null , audio : null }
+        // create brand new peerMediaSrc for this peerId
+        peerMediaSrc[peerId] = { video : null , audio : null }
+
         // listen to media come from others peer
-        peerConnection.ontrack = (event) => {   
-            
+        peerConnection.ontrack = (event) => {
+            console.log("on track");
+            // todo ontrack work fine
+            // todo problem is enemy is loaded
+            // todo so before load scene listen to this event and them remove it
             if (event.track.kind == "audio"){
-                peerMediaSrc[peer_id].audio = event.streams[0]  
-                globalEvent.callEvent("new-audio-src", {socketId : peer_id ,src : event.streams[0]})
+                peerMediaSrc[peerId].audio = event.streams[0]  
+                globalEvent.callEvent("new-audio-src", {socketId : peerId ,src : event.streams[0]})
             } else 
             if (event.track.kind == "video" ){
-                peerMediaSrc[peer_id].video = event.streams[0]
-                globalEvent.callEvent("new-video-src", {socketId : peer_id ,src : event.streams[0]})
+                peerMediaSrc[peerId].video = event.streams[0]
+                globalEvent.callEvent("new-video-src", {socketId : peerId ,src : event.streams[0]})
             }
         }
 
-        //* adding track to peer connection
+        // adding our track to peer connection if exist
         localMediaStream.forEach(stream => {
             stream.getTracks().forEach(track => {
                 peerConnection.addTrack(track, stream)
             })
         })
 
-        if (config.createOffer) { 
+        if (createOffer) { 
             // create reliable data chanel between peers for some event 
             dataChanelSetup(peerConnection.createDataChannel("information", { ordered : true }), socket.id)
-            
-            // do offer
-            doOffer(peer_id)
         }
-        
-    });
 
-    const doOffer = async (peer_id) => {
+        createNewConnection(createOffer,peerId)
+
+    })
+
+    const doOffer = async (peerId) => {
         
-        if ( peers.has(peer_id) ){
-            const peer_connection = peers.get(peer_id)
+        if ( peers.has(peerId) ){
+            const peerConnection = peers.get(peerId)
             try {
-                const local_description = await peer_connection.createOffer();
-
-                await peer_connection.setLocalDescription(local_description);
-                
-                socket.emit('relaySessionDescription', {'peer_id': peer_id, 'session_description': local_description});
+                const local_description = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(local_description);
+                socket.emit('relaySessionDescription', {'peerId': peerId, 'session_description': local_description})
             } catch (error) {
-                alert("Offer setLocalDescription failed!"); 
-                console.log("Error sending offer: ", error);
+                // alert("Offer setLocalDescription failed!");
+                console.log(error);
             }
         } else {
-            console.log("there is not peer_connection with this id");
+            console.log("there is not peerConnection with this id");
         }
 
     }
 
 
-    socket.on('sessionDescription', async (config) => {
-        const peer_id = config.peer_id;
-        const peer = peers.get(peer_id)
-        const remote_description = config.session_description;
+    socket.on('sessionDescription', async ({peerId, session_description}) => {
+
+        const peerConnection = peers.get(peerId)
+        const remote_description = session_description;
 
         const desc = new RTCSessionDescription(remote_description);
         try {
-            const stuff = await peer.setRemoteDescription(desc);
+            const stuff = await peerConnection.setRemoteDescription(desc);
 
             if (remote_description.type == "offer") {
-                const local_description = await peer.createAnswer()
-
-
-                await peer.setLocalDescription(local_description)
-
-                socket.emit('relaySessionDescription', {'peer_id': peer_id, 'session_description': local_description});
+                const local_description = await peerConnection.createAnswer()
+                await peerConnection.setLocalDescription(local_description)
+                socket.emit('relaySessionDescription', {'peerId': peerId, 'session_description': local_description});
             } else {
-                console.log(" connected successful ");
+                socket.emit("webrtc-state-change", {type : "connection-successful", peerId : peerId})
             }
         } catch (error) {
-            alert("Answer setLocalDescription failed!"); 
-            console.log("setRemoteDescription error: ", error);
+            console.log(error);
         }
 
-    });
+    })
 
 
-    socket.on('iceCandidate', function(config) {
-        const peer = peers.get(config.peer_id)
-        const ice_candidate = config.ice_candidate;
-        peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
-    });
+    socket.on('iceCandidate', ({peerId , ice_candidate}) => {
+        const peerConnection = peers.get(config.peerId)
+        peerConnection.addIceCandidate(new RTCIceCandidate(ice_candidate))
+    })
 
+    socket.on("webrtc-connection-successful", (peerId) => {
+        peersState.set(peerId, "connected")
+        console.log(" connected successful ");
+    })
+
+    socket.on("webrtc-start-again",({createOffer,peerId}) => {
+        createNewConnection(createOffer,peerId)
+    })
 
     //! fix this
-    socket.on('user-left-event', (socketID) => {
+    socket.on('webrtc-user-left', (socketID) => {
         console.log('user left',socketID);
         if (peers.has(socketID)){
             const peer = peers.get(socketID)
             peer.close()
             peers.delete(socketID)
             
+            // clear data chanels 
+            dataChanels.remove(socketID)
+
             // clear media src
             if (peerMediaSrc[socketID].video){
                 globalEvent.callEvent("remove-video-src", { socketId : socketID })
@@ -228,19 +252,18 @@ export default class BrowserWebRTC
             // get media from user
             const stream = await navigator.mediaDevices.getUserMedia(config)
 
-            // tell other user in socket to update ui
-            socket.emit("share-media", type, true)
-
             // save local stream
             localMediaStream.push(stream)
 
-            // set new media and send new offer to all peerConnection
+            // set new media to all peerConnection
             stream.getTracks().forEach(track => {
-                peers.forEach((peer, peer_id) => {
+                peers.forEach((peer, peerId) => {
                     peer.addTrack(track, stream)
-                    doOffer(peer_id)
                 })
             })
+
+            // tell other user in socket to update ui
+            socket.emit("share-media", type, true)
             
             if ( type == "video" ){
                 document.getElementById('selfvideo').srcObject = stream

@@ -126,14 +126,7 @@ export default class Enemys
     event.addCallBack('remove-audio-src', ({socketId}) => {
         document.getElementById(`${socketId}audio`).remove()
     })
-
-
-    // some player left 
-    event.addCallBack('player-left', (playerGameId) => {
-        console.log("player-left");
-        this.group.remove(playersObject[playerGameId].model)
-        delete playersObject[playerGameId]
-    })
+    
     
 
     // handel information came from server game loop

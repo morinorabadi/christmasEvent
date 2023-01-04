@@ -5,6 +5,7 @@
  */
 const { v4: uuidV4 }=  require('uuid')
 const WebRtcConnection = require('../webRTC/WebRtcConnection')
+const BrowserWebRTCManager = require('../webRTC/BrowserWebRTCManager')
 
 const fakeAdmins = [
     { username : "qwer" ,password : "1234" },
@@ -19,7 +20,10 @@ class SocketManager
     const sockets = new Map()
     
     // sockets that are authentication
-    const socketsInEvent = []
+    const socketsAuthenticated = []
+
+    // manage browser WebRTC
+    const browserWebRTCManager = new BrowserWebRTCManager(io,sendAllUsers)
 
     this.SocketConnect = (socket) => {
         // log some information
@@ -36,23 +40,29 @@ class SocketManager
             // clear socket Map
             sockets.delete(socket.id)
 
-            // clear socket in events if exist and tell to others
-            const eventIndex = socketsInEvent.indexOf(socket.id)
+            // clear socket in events if exist
+            const eventIndex = socketsAuthenticated.indexOf(socket.id)
             if (eventIndex !== -1){
-                socketsInEvent.splice(eventIndex,1)
-                io.to(socketsInEvent).emit("user-left-event", socket.id)
+                socketsAuthenticated.splice(eventIndex,1)
             }
+
+            // clear browser WebRTC 
+            browserWebRTCManager.removeSocket(socket.id)
+
 
             // clear socket in game if exist and tell to others
             const gameIndex = socketsInGame.indexOf(socket.id)
             if (gameIndex !== -1){
-                const playerGameID = socket.data.information.gameId
+                // delete from scene
+                const playerGameID = socket.data.gameId
                 socketsInGame.splice(gameIndex,1)
                 io.to(socketsInGame).emit("game-player-left", playerGameID)
                 
+                // close server peerConnection
                 peerConnections.get(socket.id).close()
                 peerConnections.delete(socket.id)
 
+                // clear game info
                 delete gameInfo[playerGameID]
 
             }
@@ -70,8 +80,8 @@ class SocketManager
                 if ( user.username == userPass.username ){
                     if ( user.password == userPass.password ){
                         console.log(`socket "${socket.id}" id login as "${user.username}"`);
-                        createDataSocket(socket,true,userPass.username)
-                        response.information = socket.data.information
+                        createSocketData(socket,true,userPass.username)
+                        response.information = socket.data
                         exist = true
                         sendAllUsers()
                     }
@@ -90,8 +100,8 @@ class SocketManager
         
         // set nickname 
         socket.on("set-nickname", (nickName) => {
-            console.log(`socket "${socket.id}" id pick "${nickName}" as nickName`);
-            createDataSocket(socket,false,nickName.username)
+            console.log(`socket "${socket.id}" id pick "${nickName.username}" as nickName`);
+            createSocketData(socket,false,nickName.username)
             const response = { status : 200, information : socket.data.username }
             sendAllUsers()
             socket.emit("server-authentication",response)
@@ -102,75 +112,20 @@ class SocketManager
          */
 
         //  after join in event
-        socket.on('join-to-event', () =>  {
-            console.log("["+ socket.id + "] join to event ")
+        socket.on('authentication-done', () =>  {
+            if (socket.data.authentication){
+                console.log("ERROR multi authentication")
+                return
+            }
+            socket.data.authentication = true
+            // log some info
+            console.log(socket.id + " authentication ")
             
-            // all others in event
-            socketsInEvent.forEach(otherID => {
-                console.log(`"${otherID}" send offer to new ${ socket.id }`);
-                sockets.get(otherID).emit("server-create-peer-connection", {'peer_id': socket.id, 'createOffer': true})
+            // start browser WebRTCconnection 
+            browserWebRTCManager.newClient(socket)
 
-                // socket that join right now
-                socket.emit("server-create-peer-connection", {'peer_id': otherID, 'createOffer': false})
-            })
             // add user to sockets In Event 
-            socketsInEvent.push(socket.id)
-        });
-
-        // for update media ui
-        socket.on("share-media", (type, isOn) => {
-            if(type == "audio" ){
-                socket.data.information.isMicOn = isOn
-            } else
-            if ( type == "video" ){
-                socket.data.information.isCamOn = isOn
-            }
-            sendAllUsers()
-        })
-
-        //! fix
-        // admin to limit others  
-        socket.on("admin-users-media", request => {
-            // check for authentication
-            if (socket.data.information){
-                // check for permission
-                if ( socket.data.information.isAdmin ){
-                    // search for user
-                    if ( sockets.has(request.id) ){
-                        const guestSocket = sockets.get(request.id)
-                        // apply limits
-                        if (request.type == "video"){
-                            guestSocket.data.information.isCamAllow = request.isAllow
-                        }else
-                        if ( request.type == "audio" ){
-                            guestSocket.data.information.isMicAllow = request.isAllow
-                        }
-                        sendAllUsers()
-                    }
-                }
-            }
-        })
-        
-        // RTCPeerConnection events
-        socket.on('relayICECandidate', (config) => {
-            const peer_id = config.peer_id;
-            const ice_candidate = config.ice_candidate;
-            console.log(`"${socket.id}" relaying ICE candidate to "${peer_id}"`);
-
-            if ( sockets.has(peer_id)) {
-                sockets.get(peer_id).emit('iceCandidate', {'peer_id': socket.id, 'ice_candidate': ice_candidate});
-            }
-        })
-
-        // RTCPeerConnection events
-        socket.on('relaySessionDescription', (config) => {
-            const peer_id = config.peer_id;
-            const session_description = config.session_description;
-            console.log(`"${socket.id}" relaying session description to "${peer_id}"`);
-
-            if (sockets.has(peer_id)) {
-                sockets.get(peer_id).emit('sessionDescription', {'peer_id': socket.id, 'session_description': session_description});
-            }
+            socketsAuthenticated.push(socket.id)
         })
 
         // chat messages
@@ -181,10 +136,7 @@ class SocketManager
          */
 
         // start game event called when load is over 
-        socket.on("start-game", () => {
-            createRTCConnection(socket)
-
-        })
+        socket.on("start-game", () => { createRTCConnection(socket) })
 
         // after we emit "create-webrtc" we wait for answer from client
         socket.on("peer-connection-answer", (answer) => { applyAnswer(socket,answer) })
@@ -197,10 +149,10 @@ class SocketManager
         const socketsID = []
         const response = { status : 200 , information : [] }
         sockets.forEach((socket, socketId) => {
-            if ( socket.data.information ){
+            if ( socket.data ){
                 socketsID.push(socketId)
                 response.information.push({
-                    ...socket.data.information,
+                    ...socket.data,
                     id : socketId,
                 })
             }
@@ -208,8 +160,8 @@ class SocketManager
         io.to(socketsID).emit("server-update-users", response)
     }
     // create data for sockets
-    function createDataSocket(socket,isAdmin,username) {
-        socket.data.information = {
+    function createSocketData(socket,isAdmin,username) {
+        socket.data = {
             isAdmin,
             username : username,
 
@@ -227,16 +179,16 @@ class SocketManager
     const messages = new Map()
     function newMessage(socket,message) {
         //! check for empty message
-        if ( socket.data.information.username ) {
+        if ( socket.data.username ) {
             const id = uuidV4()
             const messageObject = {
                 id,
                 text : message,
                 date : Date.now(),
-                owner : socket.data.information.username
+                owner : socket.data.username
             }
             messages.set(id, messageObject)
-            io.to(socketsInEvent).emit("new-message", {status : 200 , information : messageObject})
+            io.to(socketsAuthenticated).emit("new-message", {status : 200 , information : messageObject})
         } else {
             socket.emit('error')
         }
@@ -295,12 +247,12 @@ class SocketManager
                 //  apply socket
                 socketsInGame.push(socket.id)
                 const id = createGameId()
-                socket.data.information.gameId = id
+                socket.data.gameId = id
 
                 // create response
                 const response = []
                 socketsInGame.forEach(id => {
-                    const gameId = sockets.get(id).data.information.gameId 
+                    const gameId = sockets.get(id).data.gameId 
                     response.push({
                         gameId : gameId ,
                         socketId : id,
