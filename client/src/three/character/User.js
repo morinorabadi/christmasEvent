@@ -29,10 +29,8 @@ export default class UserCharacter
     cameraGroup1.add(cameraGroup)
     // adding resize event dor resize camera
     redlibcore.globalEvent.addCallBack('resize', (sizes) => { 
-
         this.camera.aspect = sizes.x / sizes.y
         this.camera.updateProjectionMatrix();
-
     })
     this.group.add(cameraGroup1)
 

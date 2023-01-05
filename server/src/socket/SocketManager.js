@@ -110,6 +110,11 @@ class SocketManager
         /**
          * video call
          */
+        // browser webRTC
+        socket.on("create-browser-webrtc-done", () => {
+            // start browser WebRTCconnection 
+            browserWebRTCManager.newClient(socket)
+        })
 
         //  after join in event
         socket.on('authentication-done', () =>  {
@@ -120,9 +125,6 @@ class SocketManager
             // log some info
             console.log(socket.id + " authentication ")
             socket.data.authentication = true
-            
-            // start browser WebRTCconnection 
-            browserWebRTCManager.newClient(socket)
 
             // add user to sockets In Event 
             socketsAuthenticated.push(socket.id)
@@ -135,7 +137,7 @@ class SocketManager
          * game
          */
 
-        // start game event called when load is over 
+        // start game event called when load is over
         socket.on("start-game", () => { createRTCConnection(socket) })
 
         // after we emit "create-webrtc" we wait for answer from client
@@ -170,7 +172,6 @@ class SocketManager
             isCamAllow : true,
         }
     }
-
     /**
      * chat
      */

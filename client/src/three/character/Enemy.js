@@ -120,18 +120,6 @@ export default class Enemys
                 }
             }
         })
-        // get media stream
-        handelEvent("get-media").then((mediaSource) => {
-            console.log("get media source");
-            Object.keys(mediaSource).forEach(socketId => {
-                if ( mediaSource[socketId].audio ){
-                    addAudio({src : mediaSource[socketId].audio , socketId : socketId})
-                }
-                if ( mediaSource[socketId].video ){
-                    addVideo({src : mediaSource[socketId].video , socketId : socketId})
-                }
-            })
-        })
     })
 
     // some player left 

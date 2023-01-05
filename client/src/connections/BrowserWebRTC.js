@@ -47,7 +47,6 @@ export default class BrowserWebRTC
     }
 
     function createNewConnection(createOffer,peerId) {
-        console.log("createNewConnection\nyour are")
         const state = peersState.get(peerId)
         if (state == "try"){
             console.log("something is wrong in createNewConnection");
@@ -72,8 +71,6 @@ export default class BrowserWebRTC
                     urls: [
                       'stun:stun.l.google.com:19302',
                       'stun:stun1.l.google.com:19302',
-                      'stun:stun2.l.google.com:19302',
-                      'stun:stun3.l.google.com:19302',
                     ],
                 },
             ]}
@@ -99,7 +96,6 @@ export default class BrowserWebRTC
 
         function dataChanelMessage(event) {
             const data = JSON.parse(event.data)
-            console.log(data);
             switch (data.text) {
                 case "close-media":
                     if (data.type == "video"){
@@ -123,6 +119,10 @@ export default class BrowserWebRTC
         // listen to data chanel comes from other
         peerConnection.ondatachannel = (event) => {
             dataChanelSetup(event.channel,socket.id)
+        }
+
+        peerConnection.oniceconnectionstatechange = () => {
+            console.log('ICE state: ',peerConnection.iceConnectionState);
         }
 
         // create brand new peerMediaSrc for this peerId
@@ -205,16 +205,14 @@ export default class BrowserWebRTC
 
     socket.on("webrtc-connection-successful", (peerId) => {
         peersState.set(peerId, "connected")
-        console.log(" connected successful ");
     })
 
     socket.on("webrtc-start-again",({createOffer,peerId}) => {
         createNewConnection(createOffer,peerId)
     })
 
-    //! fix this
+
     socket.on('webrtc-user-left', (socketID) => {
-        console.log('user left',socketID);
         if (peers.has(socketID)){
             const peer = peers.get(socketID)
             peer.close()
@@ -240,9 +238,6 @@ export default class BrowserWebRTC
     /**
      * media
      */
-    this.getMedias = () => {
-        return peerMediaSrc
-    }
 
     // active mic and cam
     const activeCamOrMic = async (type) => {

@@ -104,8 +104,7 @@ export default class Scene{
                 (direction) =>  {character.getDirection(direction)},
                 (direction) => { character.getCameraDirection(direction); },
                 () => { character.end()},
-                //! fix global isMobile
-                false
+                redlibcore.sizes.getSizes().isMobile
             )
 
             // setup renderer
@@ -116,10 +115,14 @@ export default class Scene{
                 this.active(props)
             })
 
-            redlibcore.sizes.resize()
-
+            
             // send start-game to socket than to server
             handelEvent("start-game")
+
+            redlibcore.sizes.resize()
+            setTimeout(() => { redlibcore.sizes.resize() }, 100) 
+            setTimeout(() => { redlibcore.sizes.resize() }, 500) 
+            setTimeout(() => { redlibcore.sizes.resize() }, 1000)
         }
     }
 }

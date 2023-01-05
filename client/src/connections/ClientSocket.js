@@ -20,8 +20,6 @@ class ClientSocket
         console.log("socket url is : ",urls);
         const socket =  io(urls)
  
-
-        let peerConnection = null
         let browserWebRTC = null
         let serverWebRTC = null
         let selfUser = null
@@ -33,10 +31,6 @@ class ClientSocket
         
         this.handelEvent = async (type) => {
             switch (type) {
-
-                case "get-media":
-                    return browserWebRTC.getMedias()
-
                 case "active-cam":
                     return await browserWebRTC.activeCam()
                 case "active-mic":
@@ -117,9 +111,6 @@ class ClientSocket
                 }
             })
 
-            // video and audio
-            browserWebRTC = new BrowserWebRTC(socket,this.event)
-
             
             // chat app
             socket.on("new-message", response => {
@@ -141,7 +132,6 @@ class ClientSocket
                     emit : this.emit,
                     ...option
                 })
-        
             })
 
             // start game loop after peer-to-peer connection is created
@@ -149,8 +139,15 @@ class ClientSocket
                 this.event.callEvent("start-game", {gameId, sendData : serverWebRTC.sendData})
             })
             
+            let isFirstPlayerJoin = true
             socket.on("game-player-join",(newPlayer) => {
                 this.event.callEvent("player-join", newPlayer )
+
+                if (isFirstPlayerJoin){
+                    isFirstPlayerJoin = false
+                    browserWebRTC = new BrowserWebRTC(socket,this.event)
+                    socket.emit("create-browser-webrtc-done")
+                }
             })
 
             socket.on("game-player-left",(playerGameID) => {

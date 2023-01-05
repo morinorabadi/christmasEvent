@@ -81,13 +81,6 @@ export default class Controller
 
     resize(sizes){
         if (this.isMobile) { 
-            this.joy.style.display = "none"
-
-                this.camera.style.width = sizes.x
-                this.camera.style.height = sizes.y
-
-        } else {
-
             if ( sizes.x > sizes.y ){
     
                 this.joy.style.top =  sizes.y * 0.38
@@ -109,6 +102,12 @@ export default class Controller
             }
             
             this.joyConverter.resize()
+            
+        } else {
+            this.joy.style.display = "none"
+
+                this.camera.style.width = sizes.x
+                this.camera.style.height = sizes.y
         }
 
         this.directionConverter.resize()
@@ -214,7 +213,7 @@ export default class Controller
         }
         
         //joy
-        if ( this.isMobile ){ return }
+        if ( !this.isMobile ){ return }
         const joyTouch = this.joyConverter.convert(touch)
         if ( joyTouch.x > 0.75 || joyTouch.y > 0.75 ||joyTouch.y <  -0.75 ){
             this.joyAlowDrag = false

@@ -50,12 +50,7 @@ export default function App() {
     })
 
     scene.load(() => {
-      
-      // fake loading time
-      setTimeout(() => {
-        setIsLoadOver(true)
-      }, 8000)
-
+      setIsLoadOver(true)
     })
 
     return () => {
@@ -72,14 +67,16 @@ export default function App() {
           <div id="main" >
           {
             isLoadOver ?
-            <Canvas scene={scene} />
+            <>
+              <Canvas scene={scene} />
+              <SelfUser selfUsername={selfUsername} />
+              <Users />
+              {/* <ChatBox /> */}
+            </>
             :
             <Loading/>
           }
           </div>
-          <SelfUser selfUsername={selfUsername} />
-          <Users />
-          {/* <ChatBox /> */}
         </>
         :
         <>
