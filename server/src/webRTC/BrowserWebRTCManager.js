@@ -45,6 +45,7 @@ class BrowserWebRTCManager
 
         // ICECandidate events
         socket.on('relayICECandidate', ({peerId,ice_candidate}) => {
+            console.log(peerId, "\n\n", ice_candidate);
             if (clientsSocketId.some(id => id == peerId)) {
                 io.to(peerId).emit('relayICECandidate', {'peerId': socket.id, ice_candidate});
             } else {

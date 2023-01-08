@@ -15,8 +15,7 @@ export default class Renderer
         // if "isActive" render scene
         redlibcore.globalEvent.addCallBack("process", () => {
             if ( this.isActive ){ renderer.render(scene,camera) }
-
-        })
+        },1)
 
         // handel resize event
         redlibcore.globalEvent.addCallBack("resize", (sizes) => {

@@ -135,8 +135,8 @@ class ClientSocket
             })
 
             // start game loop after peer-to-peer connection is created
-            socket.on("server-start-game",({gameId}) => {
-                this.event.callEvent("start-game", {gameId, sendData : serverWebRTC.sendData})
+            socket.on("server-start-game",(options) => {
+                this.event.callEvent("start-game", {...options, sendData : serverWebRTC.sendData})
             })
             
             let isFirstPlayerJoin = true

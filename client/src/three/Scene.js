@@ -68,10 +68,15 @@ export default class Scene{
                     {type : "gltf"   , src : "static/room.glb", loadOver : gltf    => {
                         loadedAssets.world = gltf
                     }},
-                    // room
+                    // robot
                     {type : "gltf"   , src : "static/robot.glb", loadOver : gltf    => {
                         loadedAssets.robot = gltf
-                    }}
+                    }},
+                    // border
+                    {
+                        type : "texture", src : "static/videoBorder.jpg", loadOver : texture => {
+                            loadedAssets.videoBorder = texture
+                    }},
                 ]
             })
         }
@@ -89,7 +94,7 @@ export default class Scene{
             const clock = new Clock(redlibcore)
 
             // create robot
-            const robotGenerator = new RobotGenerator(redlibcore,loadedAssets.robot)
+            const robotGenerator = new RobotGenerator(redlibcore,loadedAssets)
 
             // create character 
             character = new UserCharacters(redlibcore, robotGenerator, world.collisionShapes,() => clock.getClock())
@@ -111,18 +116,20 @@ export default class Scene{
             renderer = new Renderer(redlibcore, world.scene,character.camera)
 
             
-            getSocketEvent().addCallBack("start-game", ( props ) => {
-                this.active(props)
-            })
+            // this call when server WebRTC is created
+            getSocketEvent().addCallBack("start-game", ( option ) => {
+                document.getElementById('game').style.display = "block"
+                this.active( option )
 
+                // create fake resize for event
+                let loopId = setInterval(() => {
+                    redlibcore.sizes.resize()
+                }, 250)
+                setTimeout(() => { clearInterval(loopId) }, 3000) 
+            })
             
             // send start-game to socket than to server
             handelEvent("start-game")
-
-            redlibcore.sizes.resize()
-            setTimeout(() => { redlibcore.sizes.resize() }, 100) 
-            setTimeout(() => { redlibcore.sizes.resize() }, 500) 
-            setTimeout(() => { redlibcore.sizes.resize() }, 1000)
         }
     }
 }

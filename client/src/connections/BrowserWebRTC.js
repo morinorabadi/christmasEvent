@@ -93,6 +93,9 @@ export default class BrowserWebRTC
             }
         }
 
+        // peerConnection.addEventListener("icegatheringstatechange", (event) => {
+        //     console.log(event);
+        // })
 
         function dataChanelMessage(event) {
             const data = JSON.parse(event.data)
@@ -245,7 +248,7 @@ export default class BrowserWebRTC
 
             // generate config
             let config
-            if (type == "video"){ config = { video : {width: 480, height: 480, facingMode: "user"}}} 
+            if (type == "video"){ config = { video : {width: 400, height: 300, facingMode: "user"}}} 
             else { config = { audio : true } }
             
             // get media from user

@@ -21,9 +21,9 @@ export default class CharactersGenerator
 
 class Robot extends THREE.Object3D
 {
-    constructor(redlibcore ,model){
+    constructor(redlibcore ,assets){
         super()
-        const robot = clone(model.scene)
+        const robot = clone(assets.robot.scene)
         this.add( robot )
         
         // clean up Material
@@ -43,7 +43,7 @@ class Robot extends THREE.Object3D
 
         // create Animation object
         const animations = [] 
-        model.animations.forEach(animation => {
+        assets.robot.animations.forEach(animation => {
             animations.push(mixer.clipAction(animation))
         })
         
@@ -63,40 +63,34 @@ class Robot extends THREE.Object3D
             currentAnimation = animation
         }
 
+        // this is for robot animation
+        let lastAnimationIndex = -1
+        this.animate = (index) => {
+            if (lastAnimationIndex != index){
+                lastAnimationIndex = index
+                newAnimation(animations[index])
+            }
+        }
+
+
         // idle
-        const idleAnimation = [ 
-            {index : 0, name : "normal" },
-            {index : 1, name : "left" },
-            {index : 2, name : "right" },
-        ]
         this.idle = () => {
-            if ( currentState == "idle" ){ return }
-            currentState = "idle"
-
-            currentAnimationIndex = Math.floor(Math.random()*3)
-            const idleAnimationObject = idleAnimation[currentAnimationIndex]
-            newAnimation(animations[idleAnimationObject.index])
-            return idleAnimationObject.name
+            if ( currentState !== "idle" ){ 
+                currentState = "idle"
+                currentAnimationIndex = Math.floor(Math.random()*3)
+                newAnimation(animations[currentAnimationIndex])
+            }
+            return currentAnimationIndex 
         }
 
-        // walk
-        const walkAnimation = [ 
-            {index : 3, name : "walk0" },
-            {index : 4, name : "walk1" },
-        ]
         this.walk = () => {
-            if ( currentState == "walk" ){ return }
-            currentState = "walk"
-
-            currentAnimationIndex = Math.floor(Math.random()*2)
-            const walkAnimationObject = walkAnimation[currentAnimationIndex]
-            newAnimation(animations[walkAnimationObject.index])
-            return walkAnimationObject.name
-
-
+            if ( currentState !== "walk" ){ 
+                currentState = "walk"
+                currentAnimationIndex = Math.floor(Math.random()*2) + 3
+                newAnimation(animations[currentAnimationIndex])
+            }
+            return currentAnimationIndex
         }
-        
-        this.idle()
     }
 }
 
@@ -138,18 +132,20 @@ class CameraPosition
 
 class EnemyRobot extends Robot
 {
-    constructor(redlibcore ,model, cameraPosition){
-        super(redlibcore ,model)
+    constructor(redlibcore ,assets, cameraPosition){
+        super(redlibcore ,assets)
 
         let isVideoActive = false
         let processId = null
 
         let monitor = new THREE.Mesh(
-            new THREE.PlaneGeometry(3,3),
-            new THREE.MeshBasicMaterial()
+            new THREE.PlaneGeometry(4,3),
+            new THREE.MeshBasicMaterial({ 
+                transparent : true,
+                alphaMap : assets.videoBorder,
+            })
         )
         monitor.position.y = 12
-
 
         this.activeVideo = (src,socketId) => {
             if (isVideoActive){ return }
@@ -168,7 +164,6 @@ class EnemyRobot extends Robot
 
             this.add(monitor)
 
-            //! fix process id and make it global 
             processId = redlibcore.globalEvent.addCallBack('process',() => {
                 monitor.lookAt(cameraPosition.cameraPosition)
             })

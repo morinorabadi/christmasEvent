@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { lerp } from 'three/src/math/MathUtils'
 
 export default class UserCharacter
 {
@@ -19,10 +20,8 @@ export default class UserCharacter
     const cameraGroup1 = new THREE.Group()
     cameraGroup1.position.y = 5
 
-    const canvasHtml = document.getElementById('scene')
-    const boundingClientRect = canvasHtml.getBoundingClientRect()
 
-    this.camera = new THREE.PerspectiveCamera( 65, boundingClientRect.width / boundingClientRect.height, 0.1, 1000 );
+    this.camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight , 0.1, 1000 );
     this.camera.position.set(0,15,10)
     this.camera.lookAt(new THREE.Vector3(0,5,0))
     cameraGroup.add(this.camera)
@@ -76,6 +75,13 @@ export default class UserCharacter
     let currentSpeed = 0
     let hadSpeed = false
 
+    // rotation
+    const rotationLerp = 0.09
+    let rotationYProps = 0
+    let rotationYPropsPI = 0
+
+    // animation
+    let currentAnimation = character.idle()
     // add global events
     redlibcore.globalEvent.addCallBack("process", (delta) => {
 
@@ -84,7 +90,7 @@ export default class UserCharacter
             // increase speed
             if (currentSpeed < maxSpeed){
                 currentSpeed += delta * deltaSpeed
-                character.walk()
+                currentAnimation = character.walk()
             } else {
                 currentSpeed = maxSpeed
             }
@@ -97,7 +103,7 @@ export default class UserCharacter
             if ( currentSpeed < 0 ){
                 currentSpeed = 0
                 hadSpeed = false
-                character.idle()
+                currentAnimation = character.idle()
             }
         }
 
@@ -108,7 +114,12 @@ export default class UserCharacter
             const currentDirection = direction.clone()
 
             // rotate character
-            character.rotation.y = - direction.angle()  +  Math.PI / 2 +  cameraGroup1.rotation.y
+            const rotationNow = - direction.angle()  +  Math.PI / 2 +  cameraGroup1.rotation.y
+            if ( Math.abs(rotationNow - rotationYProps )> 5 ) {
+                rotationYPropsPI += Math.sign(rotationNow - rotationYProps) * Math.PI * 2
+            }
+            rotationYProps = rotationNow
+            character.rotation.y = lerp(character.rotation.y,rotationYProps - rotationYPropsPI, rotationLerp)
 
             currentDirection.rotateAround(new THREE.Vector2(0,0),-cameraGroup1.rotation.y)
 
@@ -139,19 +150,23 @@ export default class UserCharacter
 
         // send out user position for other player
         if (this.playerGameId){
+            //! remove this
+            //! adding fake latency
             this.sendData({ 
-                px : this.group.position.x,
-                pz : this.group.position.z,
-                ry : character.rotation.y,
+                x : this.group.position.x,
+                z : this.group.position.z,
+                y : character.rotation.y,
+                a : currentAnimation,
                 t  : this.getClock() ,
-                i : this.playerGameId
+                i : this.playerGameId,
             })
         }
-
     })
   }
+  
   active(props){
-    //! we need to update start position
+    this.group.position.x = props.position.x
+    this.group.position.z = props.position.z
     this.playerGameId = props.gameId
     this.sendData = props.sendData
     this.isActive = true

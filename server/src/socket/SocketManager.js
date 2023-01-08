@@ -259,7 +259,12 @@ class SocketManager
                     })
                 })
 
-                socket.emit("server-start-game", {status : 200, gameId : id} )
+                const position = {
+                    x : (Math.random() - 0.5) * 20,
+                    z : (Math.random() - 0.5) * 20,
+                }
+
+                socket.emit("server-start-game", {status : 200, gameId : id, position : position} )
                 io.to(socketsInGame).emit("game-player-join", response)
             } catch (error) {
                 console.log(error);
@@ -287,7 +292,7 @@ class SocketManager
             peerConnections.forEach( (peer , _ ) => {
                 peer.sendData(data)
             });
-        }, 80)
+        },40)
     }
 
     // end game loop
